@@ -3,6 +3,7 @@
 	<name>ic-client-one-wrap</name>
 	<comment></comment>
 	<projects>
+		<project>ffmpeg_test</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
