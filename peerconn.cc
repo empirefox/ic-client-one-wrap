@@ -14,8 +14,7 @@
 #include "message.h"
 #include "fake_test.h"
 
-#include "gangvideocapturerfactory.h"
-#include "gangvideocapturer.hh"
+#include "gangsources.h"
 #include "peerconn.hh"
 #include "cgo.h"
 
@@ -228,41 +227,6 @@ void Conductor::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
 	SendMessage(writer.write(jmessage));
 }
 
-cricket::VideoCapturer* Conductor::OpenGangVideoCaptureDevice() {
-	rtc::scoped_ptr<cricket::DeviceManagerInterface> dev_manager(
-			cricket::DeviceManagerFactory::Create());
-	if (!dev_manager->Init()) {
-		Msg::Error("Can't create device manager");
-		return NULL;
-	}
-
-	// Add our OpenCV VideoCapturer factory
-	cricket::DeviceManager* device_manager =
-			static_cast<cricket::DeviceManager*>(dev_manager.get());
-	device_manager->SetVideoDeviceCapturerFactory(
-			new GangVideoCapturerFactory());
-
-	std::vector<cricket::Device> devs;
-	devs.push_back(
-			FileVideoCapturer::CreateFileVideoCapturerDevice(
-					"rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"));
-
-	std::vector<cricket::Device>::iterator dev_it = devs.begin();
-	cricket::VideoCapturer* capturer = NULL;
-	for (; dev_it != devs.end(); ++dev_it) {
-		Msg::Info("loop a device");
-		capturer = dev_manager->CreateVideoCapturer(*dev_it);
-		Msg::Info(dev_it->id);
-		Msg::Info(dev_it->name);
-		if (capturer != NULL) {
-			Msg::Info("capturer ok");
-			break;
-		}
-	}
-	Msg::Info("OpenVideoCaptureDevice end");
-	return capturer;
-}
-
 cricket::VideoCapturer* Conductor::OpenVideoCaptureDevice() {
 	Msg::Info("OpenVideoCaptureDevice start");
 	rtc::scoped_ptr<cricket::DeviceManagerInterface> dev_manager(
@@ -299,23 +263,24 @@ cricket::VideoCapturer* Conductor::OpenVideoCaptureDevice() {
 }
 
 // TODO add getUserMedia func after direct test
+// "rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"
 void Conductor::AddStreams() {
 	if (active_streams_.find(kStreamLabel) != active_streams_.end()) {
 		Msg::Info("stream Already added");
 		return;  // Already added.
 	}
+	const char* url =
+			"rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp";
 
 	rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
 			peer_connection_factory_->CreateAudioTrack(kAudioLabel,
-					peer_connection_factory_->CreateAudioSource(NULL)));
+					gang::singleton_sources_class::ptr->GetAudio(url)));
 	Msg::Info("audio_track ok");
 
 	rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track(
 			peer_connection_factory_->CreateVideoTrack(kVideoLabel,
-					peer_connection_factory_->CreateVideoSource(
-							// TODO gang here!!!
-							OpenGangVideoCaptureDevice(),
-							NULL)));
+			// TODO gangsources
+					gang::singleton_sources_class::ptr->GetVideo(url)));
 	Msg::Info("video_track ok");
 
 	rtc::scoped_refptr<webrtc::MediaStreamInterface> stream =

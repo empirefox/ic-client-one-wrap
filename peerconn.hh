@@ -36,7 +36,6 @@ protected:
 	bool CreatePeerConnection(bool dtls);
 	void DeletePeerConnection();
 	void AddStreams();
-	cricket::VideoCapturer* OpenGangVideoCaptureDevice();
 	cricket::VideoCapturer* OpenVideoCaptureDevice();
 
 	//
