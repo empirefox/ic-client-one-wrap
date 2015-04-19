@@ -9,6 +9,7 @@
 #pragma once
 
 #include "talk/app/webrtc/peerconnectioninterface.h"
+#include "gangsources.h"
 
 namespace webrtc {
 class VideoCaptureModule;
@@ -81,6 +82,7 @@ protected:
 	webrtc::PeerConnectionInterface::IceServers iceServers_;
 	rtc::Thread* signaling_thread_;
 	rtc::Thread* worker_thread_;
+	gang::GangSources sources_;
 };
 
 #endif // PEERCONN_HH_

@@ -14,7 +14,6 @@
 #include "message.h"
 #include "fake_test.h"
 
-#include "gangsources.h"
 #include "peerconn.hh"
 #include "cgo.h"
 
@@ -155,7 +154,12 @@ bool Conductor::InitializePeerConnection() {
 		DeletePeerConnection();
 	}
 	Msg::Info("Created PeerConnection");
+	sources_.RegistryDecoder(
+			peer_connection_factory_,
+			"rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp");
+	Msg::Info("RegistryDecoder ok");
 	AddStreams();
+	Msg::Info("AddStreams ok");
 	return peer_connection_.get() != NULL;
 }
 
@@ -269,18 +273,19 @@ void Conductor::AddStreams() {
 		Msg::Info("stream Already added");
 		return;  // Already added.
 	}
+	Msg::Info("Adding remote stream");
 	const char* url =
 			"rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp";
 
 	rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
 			peer_connection_factory_->CreateAudioTrack(kAudioLabel,
-					gang::singleton_sources_class::ptr->GetAudio(url)));
+					sources_.GetAudio(url)));
 	Msg::Info("audio_track ok");
 
 	rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track(
 			peer_connection_factory_->CreateVideoTrack(kVideoLabel,
 			// TODO gangsources
-					gang::singleton_sources_class::ptr->GetVideo(url)));
+					sources_.GetVideo(url)));
 	Msg::Info("video_track ok");
 
 	rtc::scoped_refptr<webrtc::MediaStreamInterface> stream =
