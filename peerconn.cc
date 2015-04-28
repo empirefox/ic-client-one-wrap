@@ -13,6 +13,7 @@
 #include "defaults.h"
 #include "message.h"
 #include "fake_test.h"
+#include "gang_audio_device.h"
 
 #include "peerconn.hh"
 #include "cgo.h"
@@ -29,6 +30,8 @@ const char kCandidateSdpName[] = "candidate";
 // Names used for a SessionDescription JSON object.
 const char kSessionDescriptionTypeName[] = "type";
 const char kSessionDescriptionSdpName[] = "sdp";
+// TODO test rtsp
+const char kTestUrl[] = "rtsp://127.0.0.1:1235/test1.sdp";
 
 #define DTLS_ON  true
 #define DTLS_OFF false
@@ -140,8 +143,12 @@ bool Conductor::InitializePeerConnection() {
 	ASSERT(signaling_thread_ != NULL);
 	ASSERT(worker_thread_ != NULL);
 
+	rtc::scoped_refptr<gang::GangAudioDevice> adm = gang::GangAudioDevice::Create();
+
 	peer_connection_factory_ = webrtc::CreatePeerConnectionFactory(
-			worker_thread_, signaling_thread_, NULL, NULL, NULL);
+			worker_thread_, signaling_thread_,
+			adm,
+			NULL, NULL);
 
 	if (!peer_connection_factory_.get()) {
 		Msg::Error("Failed to initialize PeerConnectionFactory");
@@ -154,9 +161,8 @@ bool Conductor::InitializePeerConnection() {
 		DeletePeerConnection();
 	}
 	Msg::Info("Created PeerConnection");
-	sources_.RegistryDecoder(
-			peer_connection_factory_,
-			"rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp");
+	sources_.RegistryDecoder(peer_connection_factory_, kTestUrl);
+	adm->Initialize(sources_.GetDecoder(kTestUrl).get());
 	Msg::Info("RegistryDecoder ok");
 	AddStreams();
 	Msg::Info("AddStreams ok");
@@ -274,12 +280,11 @@ void Conductor::AddStreams() {
 		return;  // Already added.
 	}
 	Msg::Info("Adding remote stream");
-	const char* url =
-			"rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp";
+	const char* url = kTestUrl;
 
 	rtc::scoped_refptr<webrtc::AudioTrackInterface> audio_track(
 			peer_connection_factory_->CreateAudioTrack(kAudioLabel,
-					sources_.GetAudio(url)));
+			peer_connection_factory_->CreateAudioSource(NULL)));
 	Msg::Info("audio_track ok");
 
 	rtc::scoped_refptr<webrtc::VideoTrackInterface> video_track(
