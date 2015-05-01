@@ -14,7 +14,7 @@ void go_msg_warning(char* msg) {
 	printf("%s\n", msg);
 }
 
-void go_send_to_peer(void* pc, char* msg) {
+void go_send_to_peer(void* msgChanPtr, char* msg) {
 	printf("go_send_to_peer: %s\n", msg);
 }
 

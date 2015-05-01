@@ -13,7 +13,7 @@ package rtc
 // #cgo LDFLAGS: -lstdc++ -lnss3 -lnssutil3 -lsmime3 -lssl3 -lplds4 -lplc4 -lnspr4 -lX11 -lpthread -lrt -ldl
 //
 // #include <stdlib.h>
-// #include "peerconn.h"
+// #include "peer_wrap.h"
 import "C"
 import "unsafe"
 
@@ -22,29 +22,8 @@ type PeerConn struct {
 	unsafe.Pointer
 }
 
-// A map to make looking up the right channel easier for callbacks.
-// The alternative would be to send method pointers as callbacks but
-// that's messy with cgo and we need a container anyway.
-var conns = make(map[unsafe.Pointer]PeerConn)
-
-//export go_send_to_peer
-func go_send_to_peer(pc unsafe.Pointer, msg *C.char) {
-	if conn, ok := conns[pc]; ok {
-		conn.ToPeerChan <- C.GoString(msg)
-	}
-}
-
-func init() {
-	C.init()
-}
-
-func CreatePeer() PeerConn {
-	pc := PeerConn{
-		ToPeerChan: make(chan string, 64),
-		Pointer:    C.CreatePeer(),
-	}
-	conns[pc.Pointer] = pc
-	return pc
+func (pc PeerConn) Delete() {
+	C.DeletePeer(pc.Pointer)
 }
 
 func (pc PeerConn) CreateAnswer(sdp string) {
@@ -63,7 +42,50 @@ func (pc PeerConn) AddCandidate(sdp, mid string, line int) {
 	C.AddCandidate(pc.Pointer, csdp, cmid, C.int(line))
 }
 
-func (pc PeerConn) AddIceServer(uri, name, psd string) {
+func (pc PeerConn) SendMessage(msg string) {
+	pc.ToPeerChan <- msg
+}
+
+type Conductor struct {
+	Shared unsafe.Pointer
+	Peers  map[unsafe.Pointer]PeerConn
+}
+
+func NewShared() Conductor {
+	return Conductor{
+		Shared: C.Init(),
+		Peers:  make(map[unsafe.Pointer]PeerConn),
+	}
+}
+
+func (conductor Conductor) Release() {
+	for _, pc := range conductor.Peers {
+		pc.Delete()
+	}
+	C.Release(conductor.Shared)
+}
+
+func (conductor Conductor) Registry(url string) bool {
+	curl := C.CString(url)
+	defer C.free(unsafe.Pointer(curl))
+
+	ok := C.RegistryUrl(conductor.Shared, curl)
+	return int(ok) != 0
+}
+
+func (conductor Conductor) CreatePeer(url string) *PeerConn {
+	curl := C.CString(url)
+	defer C.free(unsafe.Pointer(curl))
+
+	pc := PeerConn{
+		ToPeerChan: make(chan string, 64),
+	}
+	pc.Pointer = C.CreatePeer(curl, conductor.Shared, unsafe.Pointer(&pc))
+	conductor.Peers[pc.Pointer] = pc
+	return &pc
+}
+
+func (conductor Conductor) AddIceServer(uri, name, psd string) {
 	curi := C.CString(uri)
 	defer C.free(unsafe.Pointer(curi))
 
@@ -73,9 +95,15 @@ func (pc PeerConn) AddIceServer(uri, name, psd string) {
 	cpsd := C.CString(psd)
 	defer C.free(unsafe.Pointer(cpsd))
 
-	C.AddICE(pc.Pointer, curi, cname, cpsd)
+	C.AddICE(conductor.Shared, curi, cname, cpsd)
 }
 
-func (pc PeerConn) AddIceUri(uri string) {
-	pc.AddIceServer(uri, "", "")
+func (conductor Conductor) AddIceUri(uri string) {
+	conductor.AddIceServer(uri, "", "")
+}
+
+//export go_send_to_peer
+func go_send_to_peer(pcPtr unsafe.Pointer, msg *C.char) {
+	pc := (*PeerConn)(pcPtr)
+	pc.SendMessage(C.GoString(msg))
 }
