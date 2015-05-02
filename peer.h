@@ -12,10 +12,12 @@
 #include "talk/app/webrtc/peerconnectioninterface.h"
 #include "shared.h"
 
+namespace one {
+
 class Peer: public webrtc::PeerConnectionObserver,
 		public webrtc::CreateSessionDescriptionObserver {
 public:
-	Peer(const std::string url, one::Shared* shared, void* chanPtr);
+	Peer(const std::string url, Shared* shared, void* goPcPtr);
 	~Peer();
 	//
 	// will export
@@ -71,9 +73,11 @@ protected:
 
 	// fields
 	std::string url_;
-	one::Shared* shared_;
-	void* msgChanPtr_;
+	Shared* shared_;
+	void* goPcPtr_;
 	rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
 };
+
+} // namespace one
 
 #endif // PEER_H_

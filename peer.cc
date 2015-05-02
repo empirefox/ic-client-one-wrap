@@ -8,11 +8,12 @@
 #include "fakeconstraints.h"
 
 #include "shared.h"
-#include "defaults.h"
-#include "message.h"
-#include "fake_test.h"
-
+#include "one_spdlog_console.h"
 #include "cgo.h"
+
+namespace one {
+
+using std::string;
 
 // Names used for a IceCandidate JSON object.
 const char kCandidateSdpMidName[] = "sdpMid";
@@ -22,8 +23,6 @@ const char kCandidateSdpName[] = "candidate";
 // Names used for a SessionDescription JSON object.
 const char kSessionDescriptionTypeName[] = "type";
 const char kSessionDescriptionSdpName[] = "sdp";
-// TODO test rtsp
-const char kTestUrl[] = "rtsp://127.0.0.1:1235/test1.sdp";
 
 class DummySetSessionDescriptionObserver: public webrtc::SetSessionDescriptionObserver {
 public:
@@ -31,11 +30,10 @@ public:
 		return new rtc::RefCountedObject<DummySetSessionDescriptionObserver>();
 	}
 	virtual void OnSuccess() {
-		Msg::Info("SetSessionDescriptionObserver.OnSuccess");
+		SPDLOG_TRACE(console);
 	}
-	virtual void OnFailure(const std::string& error) {
-		Msg::Error("DummySetSessionDescriptionObserver");
-		Msg::Error(error);
+	virtual void OnFailure(const string& error) {
+		console->error("Failed to set sdp, ({})", error);
 	}
 
 protected:
@@ -45,20 +43,23 @@ protected:
 	}
 };
 
-Peer::Peer(const std::string url, one::Shared* shared, void* chanPtr) :
+Peer::Peer(const string url, Shared* shared, void* goPcPtr) :
 				url_(url),
 				shared_(shared),
-				msgChanPtr_(chanPtr) {
+				goPcPtr_(goPcPtr) {
+	SPDLOG_TRACE(console);
 }
 
 Peer::~Peer() {
+	SPDLOG_TRACE(console);
 	Close();
 }
 
 // public
-void Peer::CreateAnswer(std::string sdp) {
+void Peer::CreateAnswer(string sdp) {
+	SPDLOG_TRACE(console);
 	if (!CreatePeerConnection()) {
-		Msg::Error("Failed to initialize our PeerConnection instance");
+		console->error("Failed to initialize our PeerConnection instance");
 		return;
 	}
 
@@ -67,30 +68,29 @@ void Peer::CreateAnswer(std::string sdp) {
 					webrtc::SessionDescriptionInterface::kOffer,
 					sdp));
 	if (!session_description) {
-		Msg::Error("Can't parse received session description message.");
+		console->error("Can't parse received session description message.");
 		return;
 	}
 	peer_connection_->SetRemoteDescription(
 			DummySetSessionDescriptionObserver::Create(),
 			session_description);
-	Msg::Info("SetRemoteDescription");
+	SPDLOG_DEBUG(console,"SetRemoteDescription ok");
 
 	peer_connection_->CreateAnswer(this, NULL);
 }
 
-void Peer::AddCandidate(std::string sdp, std::string mid, int line) {
-	Msg::Info("add a candidate");
+void Peer::AddCandidate(string sdp, string mid, int line) {
+	SPDLOG_TRACE(console);
 	rtc::scoped_ptr<webrtc::IceCandidateInterface> candidate(
 			webrtc::CreateIceCandidate(mid, line, sdp));
 	if (!candidate.get()) {
-		Msg::Error("Can't parse received candidate message.");
+		console->error("Can't parse received candidate message.");
 		return;
 	}
 	if (!peer_connection_->AddIceCandidate(candidate.get())) {
-		Msg::Error("Failed to apply the received candidate");
+		console->error("Failed to apply the received candidate");
 		return;
-	}
-	Msg::Info("added a candidate");
+	}SPDLOG_DEBUG(console,"AddIceCandidate ok");
 	return;
 }
 
@@ -101,26 +101,26 @@ bool Peer::connection_active() const {
 void Peer::Close() {
 	// close ws
 	peer_connection_ = NULL;
-	msgChanPtr_ = NULL;
+	goPcPtr_ = NULL;
 }
 // end of public
 
 // "rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"
 bool Peer::CreatePeerConnection() {
+	SPDLOG_TRACE(console);
 	std::shared_ptr<one::ComposedPeerConnectionFactory> factory =
 			shared_->GetPeerConnectionFactory(url_);
 	// TODO bind to target
 	if (!factory || !factory.get()) {
-		Msg::Error("Failed to initialize PeerConnectionFactory");
+		console->error("Failed to initialize PeerConnectionFactory");
 		return false;
 	}
 
 	peer_connection_ = factory->CreatePeerConnection(this);
 	if (!peer_connection_.get()) {
 		Close();
-		Msg::Error("CreatePeerConnection failed");
-	}
-	Msg::Info("Created PeerConnection");
+		console->error("CreatePeerConnection failed");
+	}SPDLOG_DEBUG(console,"CreatePeerConnection ok");
 
 	return peer_connection_.get() != NULL;
 }
@@ -131,15 +131,17 @@ bool Peer::CreatePeerConnection() {
 
 // Called when a remote stream is added
 void Peer::OnAddStream(webrtc::MediaStreamInterface* stream) {
+	SPDLOG_TRACE(console);
 	stream->AddRef();
 }
 
 void Peer::OnRemoveStream(webrtc::MediaStreamInterface* stream) {
+	SPDLOG_TRACE(console);
 	stream->AddRef();
 }
 
 void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
-	Msg::Info("OnIceCandidate ok");
+	SPDLOG_TRACE(console);
 
 	Json::StyledWriter writer;
 	Json::Value jmessage;
@@ -147,7 +149,7 @@ void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
 	jmessage[kSessionDescriptionTypeName] = "candidate";
 	jmessage[kCandidateSdpMidName] = candidate->sdp_mid();
 	jmessage[kCandidateSdpMlineIndexName] = candidate->sdp_mline_index();
-	std::string sdp;
+	string sdp;
 	if (!candidate->ToString(&sdp)) {
 		return;
 	}
@@ -156,31 +158,32 @@ void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
 }
 
 void Peer::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
-	Msg::Info("answer created");
+	SPDLOG_TRACE(console);
 	peer_connection_->SetLocalDescription(
 			DummySetSessionDescriptionObserver::Create(),
 			desc);
-	Msg::Info("SetLocalDescription");
+	SPDLOG_DEBUG(console,"SetLocalDescription ok");
 
-	std::string sdp;
+	string sdp;
 	desc->ToString(&sdp);
 
 	Json::StyledWriter writer;
 	Json::Value jmessage;
 	jmessage[kSessionDescriptionTypeName] = desc->type();
 	jmessage[kSessionDescriptionSdpName] = sdp;
-	Msg::Info("send desc in Conductor::OnSuccess");
 	SendMessage(writer.write(jmessage));
 }
 
-void Peer::OnFailure(const std::string& error) {
-	Msg::Error("Conductor::OnFailure");
-	Msg::Error(error);
+void Peer::OnFailure(const string& error) {
+	console->error("Failed to create sdp ({})", error);
 }
 
-void Peer::SendMessage(const std::string& json_object) {
-	go_send_to_peer(msgChanPtr_, const_cast<char*>(json_object.c_str()));
+void Peer::SendMessage(const string& json_object) {
+	SPDLOG_TRACE(console);
+	go_send_to_peer(goPcPtr_, const_cast<char*>(json_object.c_str()));
 }
+
+} // namespace one
 
 // used by go
 

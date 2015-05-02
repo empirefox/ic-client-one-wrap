@@ -5,22 +5,25 @@
  *      Author: savage
  */
 
-#include "message.h"
 #include "shared.h"
+
+#include "one_spdlog_console.h"
 
 namespace one {
 
 Shared::Shared(bool dtls) :
 				SignalingThread(new Thread) {
 
+	SPDLOG_TRACE(console);
 	if (!SignalingThread->Start()) {
-		Msg::Error("Failed to start signaling_thread_");
+		console->error("Failed to start SignalingThread");
 	}
 
 	InitConstraintsOnce(dtls);
 }
 
 Shared::~Shared() {
+	SPDLOG_TRACE(console);
 	if (SignalingThread) {
 		SignalingThread->Stop();
 		delete SignalingThread;
@@ -29,6 +32,7 @@ Shared::~Shared() {
 }
 
 void Shared::InitConstraintsOnce(bool dtls) {
+	SPDLOG_TRACE(console);
 	Constraints.SetMandatoryReceiveAudio(false);
 	Constraints.SetMandatoryReceiveVideo(false);
 	if (dtls) {
@@ -43,6 +47,7 @@ void Shared::InitConstraintsOnce(bool dtls) {
 }
 
 void Shared::AddIceServer(string uri, string name, string psd) {
+	SPDLOG_TRACE(console);
 	PeerConnectionInterface::IceServer server;
 	server.uri = uri;
 	if (!name.empty()) {
@@ -57,15 +62,18 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 // For ComposedPeerConnectionFactory
 // Will be used in go
 int Shared::AddPeerConnectionFactory(const std::string url) {
+	SPDLOG_TRACE(console);
 	shared_ptr<ComposedPeerConnectionFactory> factory(
 			new ComposedPeerConnectionFactory(url, this));
 	if (!factory.get()) {
-		Msg::Error("Failed to create ComposedPeerConnectionFactory");
+		console->error(
+				"Failed to create ComposedPeerConnectionFactory with {}",
+				url);
 		return 0;
 	}
 
 	if (!factory->Init()) {
-		Msg::Error("Failed to init ComposedPeerConnectionFactory");
+		console->error("Failed to init ComposedPeerConnectionFactory {}", url);
 		return 0;
 	}
 
@@ -79,8 +87,9 @@ std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(
 			factories_.find(url);
 
 	if (iter != factories_.end()) {
+		SPDLOG_TRACE(console,"found with {}",url);
 		return iter->second;
-	}
+	} SPDLOG_TRACE(console,"not found with {}",url);
 	return NULL;
 }
 

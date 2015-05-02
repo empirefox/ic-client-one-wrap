@@ -9,7 +9,7 @@ void* Init();
 void Release(void* shared);
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd);
 int RegistryUrl(void* sharedPtr, char *url);
-void* CreatePeer(char *url, void* sharedPtr, void* channPtr);
+void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr);
 void DeletePeer(void* pc);
 void CreateAnswer(void* pc, char* sdp);
 void AddCandidate(void* pc, char* sdp, char* mid, int line);

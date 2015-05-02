@@ -31,6 +31,7 @@
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.2007158761" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1945203437" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ffmpeg-wrap}&quot;"/>
+									<listOptionValue builtIn="false" value="/home/savage/git/spdlog/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/jsoncpp"/>
 									<listOptionValue builtIn="false" value="/home/savage/git/webrtcbuilds"/>
 								</option>

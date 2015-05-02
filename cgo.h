@@ -2,7 +2,13 @@
 #define CGO_H_
 #pragma once
 
-#ifndef NO_CGO
+#ifdef NO_CGO
+#include <ostream>
+extern void go_send_to_peer(void* goPcPtr_, char* msg);
+void go_send_to_peer(void* goPcPtr_, char* msg) {
+	printf("go_send_to_peer: %s\n", msg);
+}
+#else
 extern "C" {
 #include "_cgo_export.h"
 }

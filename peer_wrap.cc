@@ -5,7 +5,11 @@
  *      Author: savage
  */
 #include "peer.h"
+
 #include "webrtc/base/ssladapter.h"
+
+#include "gang_init_deps.h"
+#include "one_spdlog_console.h"
 
 extern "C" {
 #include "peer_wrap.h"
@@ -14,34 +18,42 @@ extern "C" {
 #define DTLS_ON  true
 #define DTLS_OFF false
 
+using std::string;
+using one::Peer;
+using one::Shared;
+
 void* Init() {
+	one::InitOneSpdlogConsole();
+	gang::InitializeGangDecoderGlobel();
 	rtc::InitializeSSL();
-	return reinterpret_cast<void*>(new one::Shared(DTLS_ON));
+	return reinterpret_cast<void*>(new Shared(DTLS_ON));
 }
 
 void Release(void* sharedPtr) {
-	one::Shared* shared = reinterpret_cast<one::Shared*>(sharedPtr);
+	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
 	if (shared) {
 		delete shared;
 	}
 	rtc::CleanupSSL();
+	gang::CleanupGangDecoderGlobel();
+	one::CleanupOneSpdlog();
 }
 
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd) {
-	reinterpret_cast<one::Shared*>(sharedPtr)->AddIceServer(
-			std::string(uri),
-			std::string(name),
-			std::string(psd));
+	reinterpret_cast<Shared*>(sharedPtr)->AddIceServer(
+			string(uri),
+			string(name),
+			string(psd));
 }
 
 int RegistryUrl(void* sharedPtr, char *url) {
-	one::Shared* shared = reinterpret_cast<one::Shared*>(sharedPtr);
-	return shared->AddPeerConnectionFactory(std::string(url));
+	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
+	return shared->AddPeerConnectionFactory(string(url));
 }
 
-void* CreatePeer(char *url, void* sharedPtr, void* chanPtr) {
-	one::Shared* shared = reinterpret_cast<one::Shared*>(sharedPtr);
-	Peer *cpc = new Peer(std::string(url), shared, chanPtr);
+void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
+	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
+	Peer *cpc = new Peer(string(url), shared, goPcPtr);
 	return reinterpret_cast<void*>(cpc);
 }
 
@@ -53,13 +65,10 @@ void DeletePeer(void* pc) {
 }
 
 void CreateAnswer(void* pc, char* sdp) {
-	reinterpret_cast<Peer*>(pc)->CreateAnswer(std::string(sdp));
+	reinterpret_cast<Peer*>(pc)->CreateAnswer(string(sdp));
 }
 
 void AddCandidate(void* pc, char* sdp, char* mid, int line) {
-	reinterpret_cast<Peer*>(pc)->AddCandidate(
-			std::string(sdp),
-			std::string(mid),
-			line);
+	reinterpret_cast<Peer*>(pc)->AddCandidate(string(sdp), string(mid), line);
 }
 
