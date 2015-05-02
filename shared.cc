@@ -16,7 +16,7 @@ Shared::Shared(bool dtls) :
 
 	SPDLOG_TRACE(console);
 	if (!SignalingThread->Start()) {
-		console->error("Failed to start SignalingThread");
+		console->error() << "Failed to start SignalingThread";
 	}
 
 	InitConstraintsOnce(dtls);
@@ -89,7 +89,7 @@ std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(
 	if (iter != factories_.end()) {
 		SPDLOG_TRACE(console,"found with {}",url);
 		return iter->second;
-	} SPDLOG_TRACE(console,"not found with {}",url);
+	}SPDLOG_TRACE(console,"not found with {}",url);
 	return NULL;
 }
 

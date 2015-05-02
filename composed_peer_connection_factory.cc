@@ -21,7 +21,7 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 				shared_(shared) {
 
 	if (!worker_thread_->Start()) {
-		console->error("worker_thread_ failed to start");
+		console->error() << "worker_thread_ failed to start";
 	}SPDLOG_TRACE(console);
 }
 
@@ -70,6 +70,7 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 }
 
 bool ComposedPeerConnectionFactory::Init() {
+	SPDLOG_TRACE(console);
 // 1. Create GangDecoder
 	decoder_ = shared_ptr<GangDecoder>(new GangDecoder(url_));
 	if (!decoder_->Init()) {

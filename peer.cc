@@ -57,10 +57,10 @@ Peer::~Peer() {
 }
 
 // public
-void Peer::CreateAnswer(string sdp) {
+void Peer::CreateAnswer(string& sdp) {
 	SPDLOG_TRACE(console);
 	if (!CreatePeerConnection()) {
-		console->error("Failed to initialize our PeerConnection instance");
+		console->error() << "Failed to initialize our PeerConnection instance";
 		return;
 	}
 
@@ -69,7 +69,7 @@ void Peer::CreateAnswer(string sdp) {
 					webrtc::SessionDescriptionInterface::kOffer,
 					sdp));
 	if (!session_description) {
-		console->error("Can't parse received session description message.");
+		console->error() << "Can't parse received session description message.";
 		return;
 	}
 	peer_connection_->SetRemoteDescription(
@@ -80,16 +80,10 @@ void Peer::CreateAnswer(string sdp) {
 	peer_connection_->CreateAnswer(this, NULL);
 }
 
-void Peer::AddCandidate(string sdp, string mid, int line) {
+void Peer::AddCandidate(webrtc::IceCandidateInterface* candidate) {
 	SPDLOG_TRACE(console);
-	rtc::scoped_ptr<webrtc::IceCandidateInterface> candidate(
-			webrtc::CreateIceCandidate(mid, line, sdp));
-	if (!candidate.get()) {
-		console->error("Can't parse received candidate message.");
-		return;
-	}
-	if (!peer_connection_->AddIceCandidate(candidate.get())) {
-		console->error("Failed to apply the received candidate");
+	if (!peer_connection_->AddIceCandidate(candidate)) {
+		console->error() << "Failed to apply the received candidate";
 		return;
 	}SPDLOG_DEBUG(console,"AddIceCandidate ok");
 	return;
@@ -103,6 +97,10 @@ void Peer::Close() {
 	// close ws
 	peer_connection_ = NULL;
 }
+
+Shared* Peer::GetShared() {
+	return shared_;
+}
 // end of public
 
 // "rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"
@@ -112,14 +110,14 @@ bool Peer::CreatePeerConnection() {
 			shared_->GetPeerConnectionFactory(url_);
 	// TODO bind to target
 	if (!factory || !factory.get()) {
-		console->error("Failed to initialize PeerConnectionFactory");
+		console->error() << "Failed to initialize PeerConnectionFactory";
 		return false;
 	}
 
 	peer_connection_ = factory->CreatePeerConnection(this);
 	if (!peer_connection_.get()) {
 		Close();
-		console->error("CreatePeerConnection failed");
+		console->error() << "CreatePeerConnection failed";
 	}SPDLOG_DEBUG(console,"CreatePeerConnection ok");
 
 	return peer_connection_.get() != NULL;
@@ -181,6 +179,23 @@ void Peer::OnFailure(const string& error) {
 void Peer::SendMessage(const string& json_object) {
 	SPDLOG_TRACE(console);
 	go_send_to_peer(goPcPtr_, const_cast<char*>(json_object.c_str()));
+}
+
+void Peer::OnMessage(rtc::Message* msg) {
+	switch (msg->message_id) {
+	case RemoteOfferSignal: {
+		RemoteOfferMsgData* offer_data =
+				static_cast<RemoteOfferMsgData*>(msg->pdata);
+		CreateAnswer(offer_data->data());
+		break;
+	}
+	case RemoteCandidate: {
+		rtc::scoped_ptr<IceCandidateMsgData> ice_data(
+				static_cast<IceCandidateMsgData*>(msg->pdata));
+		AddCandidate(ice_data->data().get());
+		break;
+	}
+	}
 }
 
 } // namespace one

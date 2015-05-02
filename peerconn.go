@@ -1,8 +1,10 @@
 package rtc
 
 // #cgo CXXFLAGS: -DPOSIX -DWEBRTC_POSIX
+// #cgo CXXFLAGS: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DSPDLOG_NO_DATETIME
+// #cgo CXXFLAGS: -DPEER_INFO_ON
 //
-// #cgo CXXFLAGS: -std=c++0x
+// #cgo CXXFLAGS: -std=c++0x -fno-rtti
 // #cgo CXXFLAGS: -I/home/savage/git/webrtcbuilds
 // #cgo CXXFLAGS: -I/usr/include/jsoncpp
 // #cgo CXXFLAGS: -I/home/savage/git/ffmpeg-wrap

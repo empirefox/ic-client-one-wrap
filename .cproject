@@ -39,6 +39,10 @@
 								<option id="gnu.cpp.compiler.option.dialect.std.1779203597" name="Language standard" superClass="gnu.cpp.compiler.option.dialect.std" value="gnu.cpp.compiler.dialect.c++11" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1663170726" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="WEBRTC_POSIX"/>
+									<listOptionValue builtIn="false" value="PEER_INFO_ON"/>
+									<listOptionValue builtIn="false" value="SPDLOG_NO_DATETIME"/>
+									<listOptionValue builtIn="false" value="SPDLOG_TRACE_ON"/>
+									<listOptionValue builtIn="false" value="SPDLOG_DEBUG_ON"/>
 									<listOptionValue builtIn="false" value="NO_CGO"/>
 									<listOptionValue builtIn="false" value="POSIX"/>
 								</option>

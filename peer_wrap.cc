@@ -65,10 +65,29 @@ void DeletePeer(void* pc) {
 }
 
 void CreateAnswer(void* pc, char* sdp) {
-	reinterpret_cast<Peer*>(pc)->CreateAnswer(string(sdp));
+	Peer *cpc = reinterpret_cast<Peer*>(pc);
+	string csdp = string(sdp);
+	cpc->GetShared()->SignalingThread->Post(
+			cpc,
+			one::RemoteOfferSignal,
+			new one::RemoteOfferMsgData(csdp));
 }
 
 void AddCandidate(void* pc, char* sdp, char* mid, int line) {
-	reinterpret_cast<Peer*>(pc)->AddCandidate(string(sdp), string(mid), line);
+	Peer *cpc = reinterpret_cast<Peer*>(pc);
+	string csdp = string(sdp);
+	string cmid = string(mid);
+	rtc::scoped_ptr<webrtc::IceCandidateInterface> candidate(
+			webrtc::CreateIceCandidate(cmid, line, csdp));
+
+	if (!candidate.get()) {
+		one::console->error() << "Can't parse received candidate message.";
+		return;
+	}
+
+	cpc->GetShared()->SignalingThread->Post(
+			cpc,
+			one::RemoteCandidate,
+			new one::IceCandidateMsgData(candidate.release()));
 }
 

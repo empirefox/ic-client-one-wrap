@@ -10,26 +10,38 @@
 
 #include <memory>
 #include "talk/app/webrtc/peerconnectioninterface.h"
+#include "webrtc/base/messagehandler.h"
 #include "shared.h"
 
 namespace one {
 
+typedef rtc::TypedMessageData<string> RemoteOfferMsgData;
+typedef rtc::ScopedMessageData<webrtc::IceCandidateInterface> IceCandidateMsgData;
+
+enum SignalType {
+	RemoteOfferSignal, RemoteCandidate
+};
+
 class Peer: public webrtc::PeerConnectionObserver,
-		public webrtc::CreateSessionDescriptionObserver {
+		public webrtc::CreateSessionDescriptionObserver,
+		public rtc::MessageHandler {
 public:
 	Peer(const std::string url, Shared* shared, void* goPcPtr);
 	~Peer();
 	//
 	// will export
 	//
-	void CreateAnswer(std::string offerSDP_sent_from_offerer);
-	void AddCandidate(std::string sdp, std::string mid, int line);
+	void CreateAnswer(std::string& offerSDP_sent_from_offerer);
+	void AddCandidate(webrtc::IceCandidateInterface* candidate);
 
 	bool connection_active() const;
 	// close conn to server
 	virtual void Close();
 
-	static rtc::Thread* signaling_thread_;
+	Shared* GetShared();
+
+	// implements the MessageHandler interface
+	void OnMessage(rtc::Message* msg);
 
 protected:
 	bool CreatePeerConnection();
