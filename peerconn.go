@@ -6,6 +6,7 @@ package rtc
 // #cgo CXXFLAGS: -I/home/savage/git/webrtcbuilds
 // #cgo CXXFLAGS: -I/usr/include/jsoncpp
 // #cgo CXXFLAGS: -I/home/savage/git/ffmpeg-wrap
+// #cgo CXXFLAGS: -I/home/savage/git/spdlog/include
 //
 // #cgo pkg-config: libavcodec libavformat
 // #cgo LDFLAGS: -std=gnu++0x -L/home/savage/git/ffmpeg-wrap/Debug -lffmpeg-wrap

@@ -53,6 +53,7 @@ Peer::Peer(const string url, Shared* shared, void* goPcPtr) :
 Peer::~Peer() {
 	SPDLOG_TRACE(console);
 	Close();
+	goPcPtr_ = NULL;
 }
 
 // public
@@ -101,7 +102,6 @@ bool Peer::connection_active() const {
 void Peer::Close() {
 	// close ws
 	peer_connection_ = NULL;
-	goPcPtr_ = NULL;
 }
 // end of public
 
