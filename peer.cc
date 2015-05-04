@@ -43,7 +43,7 @@ protected:
 	}
 };
 
-Peer::Peer(const string url, Shared* shared, void* goPcPtr) :
+Peer::Peer(const string& url, Shared* shared, void* goPcPtr) :
 				url_(url),
 				shared_(shared),
 				goPcPtr_(goPcPtr) {
@@ -52,6 +52,9 @@ Peer::Peer(const string url, Shared* shared, void* goPcPtr) :
 
 Peer::~Peer() {
 	SPDLOG_TRACE(console);
+	if (peer_connection_) {
+		peer_connection_->Close();
+	}
 	Close();
 	goPcPtr_ = NULL;
 }
@@ -75,7 +78,7 @@ void Peer::CreateAnswer(string& sdp) {
 	peer_connection_->SetRemoteDescription(
 			DummySetSessionDescriptionObserver::Create(),
 			session_description);
-	SPDLOG_DEBUG(console,"SetRemoteDescription ok");
+	SPDLOG_DEBUG(console, "SetRemoteDescription ok");
 
 	peer_connection_->CreateAnswer(this, NULL);
 }
@@ -85,7 +88,8 @@ void Peer::AddCandidate(webrtc::IceCandidateInterface* candidate) {
 	if (!peer_connection_->AddIceCandidate(candidate)) {
 		console->error() << "Failed to apply the received candidate";
 		return;
-	}SPDLOG_DEBUG(console,"AddIceCandidate ok");
+	}
+	SPDLOG_DEBUG(console, "AddIceCandidate ok");
 	return;
 }
 
@@ -118,7 +122,8 @@ bool Peer::CreatePeerConnection() {
 	if (!peer_connection_.get()) {
 		Close();
 		console->error() << "CreatePeerConnection failed";
-	}SPDLOG_DEBUG(console,"CreatePeerConnection ok");
+	}
+	SPDLOG_DEBUG(console, "CreatePeerConnection ok");
 
 	return peer_connection_.get() != NULL;
 }
@@ -160,7 +165,7 @@ void Peer::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
 	peer_connection_->SetLocalDescription(
 			DummySetSessionDescriptionObserver::Create(),
 			desc);
-	SPDLOG_DEBUG(console,"SetLocalDescription ok");
+	SPDLOG_DEBUG(console, "SetLocalDescription ok");
 
 	string sdp;
 	desc->ToString(&sdp);
@@ -189,7 +194,7 @@ void Peer::OnMessage(rtc::Message* msg) {
 		CreateAnswer(offer_data->data());
 		break;
 	}
-	case RemoteCandidate: {
+	case RemoteCandidateSignal: {
 		rtc::scoped_ptr<IceCandidateMsgData> ice_data(
 				static_cast<IceCandidateMsgData*>(msg->pdata));
 		AddCandidate(ice_data->data().get());

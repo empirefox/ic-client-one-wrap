@@ -7,6 +7,7 @@
 #include "peer.h"
 
 #include "webrtc/base/ssladapter.h"
+#include "webrtc/base/bind.h"
 
 #include "gang_init_deps.h"
 #include "one_spdlog_console.h"
@@ -48,19 +49,23 @@ void AddICE(void* sharedPtr, char *uri, char *name, char *psd) {
 
 int RegistryUrl(void* sharedPtr, char *url) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	return shared->AddPeerConnectionFactory(string(url));
+	string curl = string(url);
+	return shared->SignalingThread->Invoke<int>(
+			rtc::Bind(&Shared::AddPeerConnectionFactory, shared, curl));
 }
 
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	Peer *cpc = new Peer(string(url), shared, goPcPtr);
-	return reinterpret_cast<void*>(cpc);
+	return reinterpret_cast<void*>(shared->CreatePeer(string(url), goPcPtr));
 }
 
 void DeletePeer(void* pc) {
 	Peer *cpc = reinterpret_cast<Peer*>(pc);
 	if (cpc) {
-		delete cpc;
+		cpc->GetShared()->SignalingThread->Post(
+				cpc->GetShared(),
+				one::DeletePeerSignal,
+				new one::DeletePeerMsgData(cpc));
 	}
 }
 
@@ -87,7 +92,7 @@ void AddCandidate(void* pc, char* sdp, char* mid, int line) {
 
 	cpc->GetShared()->SignalingThread->Post(
 			cpc,
-			one::RemoteCandidate,
+			one::RemoteCandidateSignal,
 			new one::IceCandidateMsgData(candidate.release()));
 }
 

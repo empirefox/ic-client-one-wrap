@@ -14,6 +14,8 @@
 
 namespace one {
 
+class Peer;
+
 using std::map;
 using std::string;
 using std::shared_ptr;
@@ -21,18 +23,24 @@ using std::shared_ptr;
 using webrtc::PeerConnectionInterface;
 using rtc::Thread;
 
-class Shared {
+class Shared: public rtc::MessageHandler {
 public:
 	Shared(bool dtls);
 	~Shared();
+
+	Peer* CreatePeer(const std::string url, void* goPcPtr);
+	void DeletePeer(Peer* pc);
 
 	void AddIceServer(string uri, string name, string psd);
 
 	// Must after AddIceServer
 	// Will be used in go
-	int AddPeerConnectionFactory(const std::string url);
+	int AddPeerConnectionFactory(const std::string& url);
 	shared_ptr<ComposedPeerConnectionFactory> GetPeerConnectionFactory(
 			const string& url);
+
+	// implements the MessageHandler interface
+	void OnMessage(rtc::Message* msg);
 
 	PeerConnectionInterface::IceServers IceServers;
 	webrtc::FakeConstraints Constraints;

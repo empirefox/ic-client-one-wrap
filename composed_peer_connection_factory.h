@@ -13,6 +13,7 @@
 #include "talk/app/webrtc/peerconnectioninterface.h"
 #include "gang_decoder.h"
 #include "gang_audio_device.h"
+#include "owner_ref_proxy.h"
 
 namespace one {
 
@@ -32,7 +33,7 @@ using gang::GangAudioDevice;
 
 class Shared;
 
-class ComposedPeerConnectionFactory {
+class ComposedPeerConnectionFactory: public RefOwner {
 public:
 	ComposedPeerConnectionFactory(const string& url, Shared* shared);
 	~ComposedPeerConnectionFactory();
@@ -40,13 +41,20 @@ public:
 	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(
 			PeerConnectionObserver* observer);
 
+	virtual void SetRef(bool);
+
 	bool Init();
 
 private:
 
+	bool CreateVideoSource();
+
 	string url_;
 	Thread* worker_thread_;
 	Shared* shared_;
+	bool refed_;
+
+	mutable rtc::CriticalSection lock_;
 
 	scoped_refptr<PeerConnectionFactoryInterface> factory_;
 	scoped_refptr<VideoSourceInterface> video_;

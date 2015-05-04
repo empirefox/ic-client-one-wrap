@@ -18,11 +18,14 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 		Shared* shared) :
 				url_(url),
 				worker_thread_(new Thread),
-				shared_(shared) {
+				shared_(shared),
+				refed_(false),
+				video_(NULL) {
 
 	if (!worker_thread_->Start()) {
 		console->error() << "worker_thread_ failed to start";
-	}SPDLOG_TRACE(console);
+	}
+	SPDLOG_TRACE(console);
 }
 
 ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
@@ -55,9 +58,16 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 	}
 
 	if (decoder_->IsVideoAvailable()) {
-		scoped_refptr<webrtc::VideoTrackInterface> video_track(
-				factory_->CreateVideoTrack(kVideoLabel, video_));
-		if (!stream->AddTrack(video_track)) {
+		rtc::CritScope cs(&lock_);
+		scoped_refptr<webrtc::VideoTrackInterface> video_track;
+		if (video_.get() || CreateVideoSource()) {
+			SPDLOG_TRACE(console, "Got video source.");
+			video_track = factory_->CreateVideoTrack(
+					kVideoLabel,
+					OwnedVideoSourceRef::Create(this, video_));
+		}
+		if (video_track.get() && !stream->AddTrack(video_track)) {
+			// after one delete, exist count 3 -> 2, created count 2 -> 1(delete)
 			console->error("Failed to add video track ({})", url_);
 		}
 	}
@@ -69,6 +79,39 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 	return peer_connection_;
 }
 
+// TODO refactor this
+// maybe start gang when peer connection count>0
+//       stop gang when peer connection count==0
+void ComposedPeerConnectionFactory::SetRef(bool refed) {
+	SPDLOG_TRACE(console, "SetRef start.");
+	rtc::CritScope cs(&lock_);
+	refed_ = refed;
+	if (!refed_ && video_.get()) {
+		SPDLOG_TRACE(console, "SetRef process.");
+		if (video_->AddRef() == 2) {
+			SPDLOG_TRACE(console, "SetRef delete.");
+			video_->Release();
+			video_ = NULL;
+			return;
+		}
+		SPDLOG_TRACE(console, "SetRef pass.");
+		video_->Release();
+	}
+	SPDLOG_TRACE(console, "SetRef end.");
+}
+
+bool ComposedPeerConnectionFactory::CreateVideoSource() {
+	SPDLOG_TRACE(console, "CreateVideoSource start.");
+	// auto delete with SetRef(false)
+	video_ = factory_->CreateVideoSource(
+			GangVideoCapturer::Create(decoder_.get()),
+			NULL);
+
+	SPDLOG_TRACE(console, "VideoSource created.");
+	return video_ != NULL;
+}
+
+// TODO move Factory relative to signaling thread
 bool ComposedPeerConnectionFactory::Init() {
 	SPDLOG_TRACE(console);
 // 1. Create GangDecoder
@@ -79,12 +122,11 @@ bool ComposedPeerConnectionFactory::Init() {
 
 // 2. Create GangAudioDevice
 	if (decoder_->IsAudioAvailable()) {
-		audio_ = GangAudioDevice::Create();
+		audio_ = GangAudioDevice::Create(decoder_.get(), 1);
 		if (!audio_.get()) {
 			return false;
 		}
-		audio_->Initialize(decoder_.get());
-		SPDLOG_TRACE(console,"GangAudioDevice Initialized.");
+		SPDLOG_TRACE(console, "GangAudioDevice Initialized.");
 	}
 
 // 3. Create PeerConnectionFactory
@@ -96,21 +138,11 @@ bool ComposedPeerConnectionFactory::Init() {
 			NULL);
 	if (!factory_.get()) {
 		return false;
-	}SPDLOG_TRACE(console,"PeerConnectionFactory created.");
+	}
+	SPDLOG_TRACE(console, "PeerConnectionFactory created.");
 
 // 4. Create VideoSource
-	if (decoder_->IsVideoAvailable()) {
-		GangVideoCapturer* capturer = new GangVideoCapturer();
-		if (!capturer) {
-			return false;
-		}
-		capturer->Initialize(decoder_.get());
-		SPDLOG_TRACE(console,"GangVideoCapturer Initialized.");
-		video_ = factory_->CreateVideoSource(capturer, NULL);
-		if (!video_.get()) {
-			return false;
-		}SPDLOG_TRACE(console,"VideoSource created.");
-	}
+	// will be created after peer connection created
 
 // 5. Check if video or audio exist
 	if (!audio_.get() && !video_.get()) {
@@ -118,7 +150,7 @@ bool ComposedPeerConnectionFactory::Init() {
 		return false;
 	}
 
-	SPDLOG_TRACE(console,"OK");
+	SPDLOG_TRACE(console, "OK");
 
 	return true;
 }

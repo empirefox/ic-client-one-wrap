@@ -7,6 +7,7 @@
 
 #include "shared.h"
 
+#include "peer.h"
 #include "one_spdlog_console.h"
 
 namespace one {
@@ -29,6 +30,14 @@ Shared::~Shared() {
 		delete SignalingThread;
 		SignalingThread = NULL;
 	}
+}
+
+Peer* Shared::CreatePeer(const std::string url, void* goPcPtr) {
+	return new Peer(url, this, goPcPtr);
+}
+
+void Shared::DeletePeer(Peer* pc) {
+	delete pc;
 }
 
 void Shared::InitConstraintsOnce(bool dtls) {
@@ -61,7 +70,7 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 
 // For ComposedPeerConnectionFactory
 // Will be used in go
-int Shared::AddPeerConnectionFactory(const std::string url) {
+int Shared::AddPeerConnectionFactory(const std::string& url) {
 	SPDLOG_TRACE(console);
 	shared_ptr<ComposedPeerConnectionFactory> factory(
 			new ComposedPeerConnectionFactory(url, this));
@@ -91,6 +100,17 @@ std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(
 		return iter->second;
 	}SPDLOG_TRACE(console,"not found with {}",url);
 	return NULL;
+}
+
+void Shared::OnMessage(rtc::Message* msg) {
+	switch (msg->message_id) {
+	case DeletePeerSignal: {
+		DeletePeerMsgData* peer_data =
+				static_cast<DeletePeerMsgData*>(msg->pdata);
+		DeletePeer(peer_data->data());
+		break;
+	}
+	}
 }
 
 } // namespace one

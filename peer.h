@@ -15,18 +15,19 @@
 
 namespace one {
 
+typedef rtc::TypedMessageData<Peer*> DeletePeerMsgData;
 typedef rtc::TypedMessageData<string> RemoteOfferMsgData;
 typedef rtc::ScopedMessageData<webrtc::IceCandidateInterface> IceCandidateMsgData;
 
 enum SignalType {
-	RemoteOfferSignal, RemoteCandidate
+	RemoteOfferSignal, RemoteCandidateSignal, DeletePeerSignal,
 };
 
 class Peer: public webrtc::PeerConnectionObserver,
 		public webrtc::CreateSessionDescriptionObserver,
 		public rtc::MessageHandler {
 public:
-	Peer(const std::string url, Shared* shared, void* goPcPtr);
+	Peer(const std::string& url, Shared* shared, void* goPcPtr);
 	~Peer();
 	//
 	// will export
