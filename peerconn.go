@@ -21,7 +21,7 @@ import "C"
 import "unsafe"
 
 type PeerConn struct {
-	ToPeerChan chan string
+	ToPeerChan chan []byte
 	unsafe.Pointer
 }
 
@@ -45,7 +45,7 @@ func (pc PeerConn) AddCandidate(sdp, mid string, line int) {
 	C.AddCandidate(pc.Pointer, csdp, cmid, C.int(line))
 }
 
-func (pc PeerConn) SendMessage(msg string) {
+func (pc PeerConn) SendMessage(msg []byte) {
 	pc.ToPeerChan <- msg
 }
 
@@ -81,7 +81,7 @@ func (conductor Conductor) CreatePeer(url string) *PeerConn {
 	defer C.free(unsafe.Pointer(curl))
 
 	pc := PeerConn{
-		ToPeerChan: make(chan string, 64),
+		ToPeerChan: make(chan []byte, 64),
 	}
 	pc.Pointer = C.CreatePeer(curl, conductor.Shared, unsafe.Pointer(&pc))
 	conductor.Peers[pc.Pointer] = pc
@@ -108,5 +108,5 @@ func (conductor Conductor) AddIceUri(uri string) {
 //export go_send_to_peer
 func go_send_to_peer(pcPtr unsafe.Pointer, msg *C.char) {
 	pc := (*PeerConn)(pcPtr)
-	pc.SendMessage(C.GoString(msg))
+	pc.SendMessage([]byte(C.GoString(msg)))
 }
