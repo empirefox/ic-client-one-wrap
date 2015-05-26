@@ -45,10 +45,6 @@ func (pc PeerConn) AddCandidate(sdp, mid string, line int) {
 	C.AddCandidate(pc.Pointer, csdp, cmid, C.int(line))
 }
 
-func (pc PeerConn) SendMessage(msg []byte) {
-	pc.ToPeerChan <- msg
-}
-
 type Conductor struct {
 	Shared unsafe.Pointer
 	Peers  map[unsafe.Pointer]PeerConn
@@ -76,12 +72,12 @@ func (conductor Conductor) Registry(url string) bool {
 	return int(ok) != 0
 }
 
-func (conductor Conductor) CreatePeer(url string) *PeerConn {
+func (conductor Conductor) CreatePeer(url string, send chan []byte) *PeerConn {
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 
 	pc := PeerConn{
-		ToPeerChan: make(chan []byte, 64),
+		ToPeerChan: send,
 	}
 	pc.Pointer = C.CreatePeer(curl, conductor.Shared, unsafe.Pointer(&pc))
 	conductor.Peers[pc.Pointer] = pc
@@ -108,5 +104,5 @@ func (conductor Conductor) AddIceUri(uri string) {
 //export go_send_to_peer
 func go_send_to_peer(pcPtr unsafe.Pointer, msg *C.char) {
 	pc := (*PeerConn)(pcPtr)
-	pc.SendMessage([]byte(C.GoString(msg)))
+	pc.ToPeerChan <- []byte(C.GoString(msg))
 }
