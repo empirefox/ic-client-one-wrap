@@ -10,7 +10,7 @@ package rtc
 // #cgo CXXFLAGS: -I/home/savage/git/ffmpeg-wrap
 // #cgo CXXFLAGS: -I/home/savage/git/spdlog/include
 //
-// #cgo pkg-config: libavcodec libavformat
+// #cgo pkg-config: libavcodec libavformat libssl
 // #cgo LDFLAGS: -std=gnu++0x -L/home/savage/git/ffmpeg-wrap/Debug -lffmpeg-wrap
 // #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Release -lwebrtc_full
 // #cgo LDFLAGS: -lstdc++ -lnss3 -lnssutil3 -lsmime3 -lssl3 -lplds4 -lplc4 -lnspr4 -lX11 -lpthread -lrt -ldl
