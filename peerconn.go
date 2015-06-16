@@ -1,6 +1,6 @@
 package rtc
 
-// #cgo CXXFLAGS: -DPOSIX -DWEBRTC_POSIX
+// #cgo CXXFLAGS: -DWEBRTC_POSIX
 // #cgo CXXFLAGS: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DSPDLOG_NO_DATETIME
 // #cgo CXXFLAGS: -DPEER_INFO_ON
 //
@@ -18,7 +18,11 @@ package rtc
 // #include <stdlib.h>
 // #include "peer_wrap.h"
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/golang/glog"
+)
 
 ////////////////////////////////////
 //            PeerConn
@@ -70,7 +74,7 @@ type conductor struct {
 }
 
 func NewConductor() Conductor {
-	return conductor{
+	return &conductor{
 		shared: C.Init(),
 		peers:  make(map[unsafe.Pointer]PeerConn),
 	}
@@ -95,8 +99,8 @@ func (conductor conductor) CreatePeer(url string, send chan []byte) PeerConn {
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 
-	pc := peerConn{send: send}
-	pc.Pointer = C.CreatePeer(curl, conductor.shared, unsafe.Pointer(&pc))
+	pc := &peerConn{send: send}
+	pc.Pointer = C.CreatePeer(curl, conductor.shared, unsafe.Pointer(pc))
 	conductor.peers[pc.Pointer] = pc
 	return pc
 }
@@ -114,8 +118,15 @@ func (conductor conductor) AddIceServer(uri, name, psd string) {
 	C.AddICE(conductor.shared, curi, cname, cpsd)
 }
 
+func (pc *peerConn) SendMessage(msg string) {
+	glog.Infoln("SendMessage:")
+	pc.send <- []byte(msg)
+	glog.Infoln("SendMessage ok")
+}
+
 //export go_send_to_peer
 func go_send_to_peer(pcPtr unsafe.Pointer, msg *C.char) {
+	glog.Infoln("go_send_to_peer")
 	pc := (*peerConn)(pcPtr)
-	pc.send <- []byte(C.GoString(msg))
+	pc.SendMessage(C.GoString(msg))
 }
