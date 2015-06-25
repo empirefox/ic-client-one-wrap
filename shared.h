@@ -35,9 +35,8 @@ public:
 
 	// Must after AddIceServer
 	// Will be used in go
-	int AddPeerConnectionFactory(const std::string& url);
-	shared_ptr<ComposedPeerConnectionFactory> GetPeerConnectionFactory(
-			const string& url);
+	int AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled);
+	shared_ptr<ComposedPeerConnectionFactory> GetPeerConnectionFactory(const string& url);
 
 	// implements the MessageHandler interface
 	void OnMessage(rtc::Message* msg);

@@ -57,7 +57,7 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.linker.base.1229170535" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.base"/>
 							<tool commandLinePattern="${COMMAND} ${INPUTS} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT}" id="cdt.managedbuild.tool.gnu.cpp.linker.base.1410907804" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
-								<option id="gnu.cpp.link.option.flags.1845277359" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`pkg-config --libs libssl nss x11 libavcodec libavformat`" valueType="string"/>
+								<option id="gnu.cpp.link.option.flags.1845277359" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`pkg-config --libs libssl nss x11 libavcodec libavformat libavfilter`" valueType="string"/>
 								<option id="gnu.cpp.link.option.libs.1375275502" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="ffmpeg-wrap"/>
 									<listOptionValue builtIn="false" value="webrtc_full"/>

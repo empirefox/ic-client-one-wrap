@@ -35,15 +35,19 @@ class Shared;
 
 class ComposedPeerConnectionFactory: public RefOwner {
 public:
-	ComposedPeerConnectionFactory(const string& url, Shared* shared);
+	ComposedPeerConnectionFactory(
+			Shared* shared,
+			const string& url,
+			const string& rec_name,
+			bool rec_enabled);
 	~ComposedPeerConnectionFactory();
 
-	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(
-			PeerConnectionObserver* observer);
+	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(PeerConnectionObserver* observer);
 
 	virtual void SetRef(bool);
 
 	bool Init();
+	void SetRecordEnabled(bool enabled);
 
 private:
 

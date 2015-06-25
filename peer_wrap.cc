@@ -41,17 +41,25 @@ void Release(void* sharedPtr) {
 }
 
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd) {
-	reinterpret_cast<Shared*>(sharedPtr)->AddIceServer(
-			string(uri),
-			string(name),
-			string(psd));
+	reinterpret_cast<Shared*>(sharedPtr)->AddIceServer(string(uri), string(name), string(psd));
 }
 
-int RegistryUrl(void* sharedPtr, char *url) {
+int RegistryUrl(void* sharedPtr, char *url, char *rec_name, int rec_enabled) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
 	string curl = string(url);
+	string crec_name = string(rec_name);
 	return shared->SignalingThread->Invoke<int>(
-			rtc::Bind(&Shared::AddPeerConnectionFactory, shared, curl));
+			rtc::Bind(&Shared::AddPeerConnectionFactory, shared, curl, crec_name, rec_enabled));
+}
+
+void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
+	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
+	string curl = string(url);
+	auto factory = shared->GetPeerConnectionFactory(curl);
+	if (!factory) {
+		return;
+	}
+	factory->SetRecordEnabled(rec_enabled);
 }
 
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {

@@ -45,13 +45,9 @@ void Shared::InitConstraintsOnce(bool dtls) {
 	Constraints.SetMandatoryReceiveAudio(false);
 	Constraints.SetMandatoryReceiveVideo(false);
 	if (dtls) {
-		Constraints.AddOptional(
-				webrtc::MediaConstraintsInterface::kEnableDtlsSrtp,
-				"true");
+		Constraints.AddOptional(webrtc::MediaConstraintsInterface::kEnableDtlsSrtp, "true");
 	} else {
-		Constraints.AddOptional(
-				webrtc::MediaConstraintsInterface::kEnableDtlsSrtp,
-				"false");
+		Constraints.AddOptional(webrtc::MediaConstraintsInterface::kEnableDtlsSrtp, "false");
 	}
 }
 
@@ -70,14 +66,12 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 
 // For ComposedPeerConnectionFactory
 // Will be used in go
-int Shared::AddPeerConnectionFactory(const std::string& url) {
+int Shared::AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled) {
 	SPDLOG_TRACE(console);
 	shared_ptr<ComposedPeerConnectionFactory> factory(
-			new ComposedPeerConnectionFactory(url, this));
+			new ComposedPeerConnectionFactory(this, url, rec_name, rec_enabled));
 	if (!factory.get()) {
-		console->error(
-				"Failed to create ComposedPeerConnectionFactory with {}",
-				url);
+		console->error("Failed to create ComposedPeerConnectionFactory with {}", url);
 		return 0;
 	}
 
@@ -90,23 +84,21 @@ int Shared::AddPeerConnectionFactory(const std::string& url) {
 	return 1;
 }
 
-std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(
-		const string& url) {
-	map<string, shared_ptr<ComposedPeerConnectionFactory> >::iterator iter =
-			factories_.find(url);
+std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(const string& url) {
+	map<string, shared_ptr<ComposedPeerConnectionFactory> >::iterator iter = factories_.find(url);
 
 	if (iter != factories_.end()) {
-		SPDLOG_TRACE(console,"found with {}",url);
+		SPDLOG_TRACE(console, "found with {}", url);
 		return iter->second;
-	}SPDLOG_TRACE(console,"not found with {}",url);
+	}
+	SPDLOG_TRACE(console, "not found with {}", url);
 	return NULL;
 }
 
 void Shared::OnMessage(rtc::Message* msg) {
 	switch (msg->message_id) {
 	case DeletePeerSignal: {
-		DeletePeerMsgData* peer_data =
-				static_cast<DeletePeerMsgData*>(msg->pdata);
+		DeletePeerMsgData* peer_data = static_cast<DeletePeerMsgData*>(msg->pdata);
 		DeletePeer(peer_data->data());
 		break;
 	}

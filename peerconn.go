@@ -10,7 +10,7 @@ package rtc
 // #cgo CXXFLAGS: -I/home/savage/git/ffmpeg-wrap
 // #cgo CXXFLAGS: -I/home/savage/git/spdlog/include
 //
-// #cgo pkg-config: libavcodec libavformat libssl
+// #cgo pkg-config: libavcodec libavformat libavfilter libssl
 // #cgo LDFLAGS: -std=gnu++0x -L/home/savage/git/ffmpeg-wrap/Debug -lffmpeg-wrap
 // #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Release -lwebrtc_full
 // #cgo LDFLAGS: -lstdc++ -lnss3 -lnssutil3 -lsmime3 -lssl3 -lplds4 -lplc4 -lnspr4 -lX11 -lpthread -lrt -ldl
@@ -63,7 +63,8 @@ func (pc peerConn) AddCandidate(sdp, mid string, line int) {
 ////////////////////////////////////
 type Conductor interface {
 	Release()
-	Registry(url string) bool
+	Registry(url, recName string, recEnabled bool) bool
+	SetRecordEnabled(url string, recEnabled bool)
 	CreatePeer(url string, send chan []byte) PeerConn
 	AddIceServer(uri, name, psd string)
 }
@@ -87,12 +88,28 @@ func (conductor conductor) Release() {
 	C.Release(conductor.shared)
 }
 
-func (conductor conductor) Registry(url string) bool {
+func (conductor conductor) Registry(url, recName string, recEnabled bool) bool {
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
+	crecName := C.CString(recName)
+	defer C.free(unsafe.Pointer(crecName))
+	enabled := C.int(0)
+	if recEnabled {
+		enabled = C.int(1)
+	}
 
-	ok := C.RegistryUrl(conductor.shared, curl)
+	ok := C.RegistryUrl(conductor.shared, curl, crecName, enabled)
 	return int(ok) != 0
+}
+
+func (conductor conductor) SetRecordEnabled(url string, recEnabled bool) {
+	curl := C.CString(url)
+	defer C.free(unsafe.Pointer(curl))
+	enabled := C.int(0)
+	if recEnabled {
+		enabled = C.int(1)
+	}
+	C.SetRecordEnabled(conductor.shared, curl, enabled)
 }
 
 func (conductor conductor) CreatePeer(url string, send chan []byte) PeerConn {

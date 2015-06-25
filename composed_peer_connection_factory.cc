@@ -14,18 +14,20 @@ const char kVideoLabel[] = "video_label";
 const char kStreamLabel[] = "stream_label";
 
 ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
+		Shared* shared,
 		const string& url,
-		Shared* shared) :
+		const string& rec_name,
+		bool rec_enabled) :
 				url_(url),
 				worker_thread_(new Thread),
 				shared_(shared),
 				refed_(false),
-				video_(NULL) {
+				decoder_(new GangDecoder(url, rec_name, rec_enabled)) {
 
 	if (!worker_thread_->Start()) {
 		console->error() << "worker_thread_ failed to start";
 	}
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console)
 }
 
 ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
@@ -36,22 +38,19 @@ ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
 scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeerConnection(
 		PeerConnectionObserver* observer) {
 	SPDLOG_TRACE(console);
-	scoped_refptr<PeerConnectionInterface> peer_connection_ =
-			factory_->CreatePeerConnection(
-					shared_->IceServers,
-					&shared_->Constraints,
-					NULL,
-					NULL,
-					observer);
+	scoped_refptr<PeerConnectionInterface> peer_connection_ = factory_->CreatePeerConnection(
+			shared_->IceServers,
+			&shared_->Constraints,
+			NULL,
+			NULL,
+			observer);
 
-	scoped_refptr<webrtc::MediaStreamInterface> stream =
-			factory_->CreateLocalMediaStream(kStreamLabel);
+	scoped_refptr<webrtc::MediaStreamInterface> stream = factory_->CreateLocalMediaStream(
+			kStreamLabel);
 
 	if (decoder_->IsAudioAvailable()) {
 		scoped_refptr<webrtc::AudioTrackInterface> audio_track(
-				factory_->CreateAudioTrack(
-						kAudioLabel,
-						factory_->CreateAudioSource(NULL)));
+				factory_->CreateAudioTrack(kAudioLabel, factory_->CreateAudioSource(NULL)));
 		if (!stream->AddTrack(audio_track)) {
 			console->error("Failed to add audio track ({})", url_);
 		}
@@ -61,7 +60,7 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 		rtc::CritScope cs(&lock_);
 		scoped_refptr<webrtc::VideoTrackInterface> video_track;
 		if (video_.get() || CreateVideoSource()) {
-			SPDLOG_TRACE(console, "Got video source.");
+			SPDLOG_TRACE(console, "Got video source.")
 			video_track = factory_->CreateVideoTrack(
 					kVideoLabel,
 					OwnedVideoSourceRef::Create(this, video_));
@@ -83,39 +82,37 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 // maybe start gang when peer connection count>0
 //       stop gang when peer connection count==0
 void ComposedPeerConnectionFactory::SetRef(bool refed) {
-	SPDLOG_TRACE(console, "SetRef start.");
+	SPDLOG_TRACE(console, "SetRef start.")
 	rtc::CritScope cs(&lock_);
 	refed_ = refed;
 	if (!refed_ && video_.get()) {
-		SPDLOG_TRACE(console, "SetRef process.");
+		SPDLOG_TRACE(console, "SetRef process.")
 		if (video_->AddRef() == 2) {
-			SPDLOG_TRACE(console, "SetRef delete.");
+			SPDLOG_TRACE(console, "SetRef delete.")
 			video_->Release();
 			video_ = NULL;
 			return;
 		}
-		SPDLOG_TRACE(console, "SetRef pass.");
+		SPDLOG_TRACE(console, "SetRef pass.")
 		video_->Release();
 	}
-	SPDLOG_TRACE(console, "SetRef end.");
+	SPDLOG_TRACE(console, "SetRef end.")
 }
 
 bool ComposedPeerConnectionFactory::CreateVideoSource() {
-	SPDLOG_TRACE(console, "CreateVideoSource start.");
+	SPDLOG_TRACE(console, "CreateVideoSource start.")
 	// auto delete with SetRef(false)
-	video_ = factory_->CreateVideoSource(
-			GangVideoCapturer::Create(decoder_.get()),
-			NULL);
+	video_ = factory_->CreateVideoSource(GangVideoCapturer::Create(decoder_.get()),
+	NULL);
 
-	SPDLOG_TRACE(console, "VideoSource created.");
+	SPDLOG_TRACE(console, "VideoSource created.")
 	return video_ != NULL;
 }
 
 // TODO move Factory relative to signaling thread
 bool ComposedPeerConnectionFactory::Init() {
 	SPDLOG_TRACE(console);
-// 1. Create GangDecoder
-	decoder_ = shared_ptr<GangDecoder>(new GangDecoder(url_));
+// 1. Check GangDecoder
 	if (!decoder_->Init()) {
 		return false;
 	}
@@ -126,20 +123,17 @@ bool ComposedPeerConnectionFactory::Init() {
 		if (!audio_.get()) {
 			return false;
 		}
-		SPDLOG_TRACE(console, "GangAudioDevice Initialized.");
+		SPDLOG_TRACE(console, "GangAudioDevice Initialized.")
 	}
 
 // 3. Create PeerConnectionFactory
-	factory_ = webrtc::CreatePeerConnectionFactory(
-			worker_thread_,
-			shared_->SignalingThread,
-			audio_,
-			NULL,
-			NULL);
+	factory_ = webrtc::CreatePeerConnectionFactory(worker_thread_, shared_->SignalingThread, audio_,
+	NULL,
+	NULL);
 	if (!factory_.get()) {
 		return false;
 	}
-	SPDLOG_TRACE(console, "PeerConnectionFactory created.");
+	SPDLOG_TRACE(console, "PeerConnectionFactory created.")
 
 // 4. Create VideoSource
 	// will be created after peer connection created
@@ -150,9 +144,15 @@ bool ComposedPeerConnectionFactory::Init() {
 		return false;
 	}
 
-	SPDLOG_TRACE(console, "OK");
+	SPDLOG_TRACE(console, "OK")
 
 	return true;
+}
+
+void ComposedPeerConnectionFactory::SetRecordEnabled(bool enabled) {
+	if (decoder_) {
+		decoder_->SetRecordEnabled(enabled);
+	}
 }
 
 } // namespace one

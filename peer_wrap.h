@@ -8,7 +8,8 @@
 void* Init();
 void Release(void* shared);
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd);
-int RegistryUrl(void* sharedPtr, char *url);
+int RegistryUrl(void* sharedPtr, char *url, char *rec_name, int rec_enabled);
+void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled);
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr);
 void DeletePeer(void* pc);
 void CreateAnswer(void* pc, char* sdp);
