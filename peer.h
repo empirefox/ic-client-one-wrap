@@ -88,6 +88,7 @@ protected:
 	std::string url_;
 	Shared* shared_;
 	void* goPcPtr_;
+	std::shared_ptr<one::ComposedPeerConnectionFactory> factory_;
 	rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
 };
 

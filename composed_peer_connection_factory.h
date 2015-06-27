@@ -12,8 +12,8 @@
 #include "talk/app/webrtc/videosourceinterface.h"
 #include "talk/app/webrtc/peerconnectioninterface.h"
 #include "gang_decoder.h"
+#include "gangvideocapturer.h"
 #include "gang_audio_device.h"
-#include "owner_ref_proxy.h"
 
 namespace one {
 
@@ -25,15 +25,17 @@ using webrtc::PeerConnectionFactoryInterface;
 using webrtc::PeerConnectionInterface;
 using webrtc::PeerConnectionObserver;
 using webrtc::VideoSourceInterface;
+using webrtc::MediaStreamInterface;
 using rtc::Thread;
 using rtc::scoped_refptr;
 
 using gang::GangDecoder;
+using gang::GangVideoCapturer;
 using gang::GangAudioDevice;
 
 class Shared;
 
-class ComposedPeerConnectionFactory: public RefOwner {
+class ComposedPeerConnectionFactory {
 public:
 	ComposedPeerConnectionFactory(
 			Shared* shared,
@@ -43,15 +45,13 @@ public:
 	~ComposedPeerConnectionFactory();
 
 	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(PeerConnectionObserver* observer);
-
-	virtual void SetRef(bool);
+	void RemoveOnePeerConnection();
 
 	bool Init();
+	void InitStram();
 	void SetRecordEnabled(bool enabled);
 
 private:
-
-	bool CreateVideoSource();
 
 	string url_;
 	Thread* worker_thread_;
@@ -61,9 +61,11 @@ private:
 	mutable rtc::CriticalSection lock_;
 
 	scoped_refptr<PeerConnectionFactoryInterface> factory_;
-	scoped_refptr<VideoSourceInterface> video_;
-	scoped_refptr<GangAudioDevice> audio_;
+	scoped_refptr<MediaStreamInterface> stream_;
 	shared_ptr<GangDecoder> decoder_;
+	GangVideoCapturer* video_;
+	scoped_refptr<GangAudioDevice> audio_;
+	int peers_;
 };
 
 } // namespace one

@@ -30,7 +30,7 @@ public:
 		return new rtc::RefCountedObject<DummySetSessionDescriptionObserver>();
 	}
 	virtual void OnSuccess() {
-		SPDLOG_TRACE(console);
+		SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	}
 	virtual void OnFailure(const string& error) {
 		console->error("Failed to set sdp, ({})", error);
@@ -47,12 +47,14 @@ Peer::Peer(const string& url, Shared* shared, void* goPcPtr) :
 				url_(url),
 				shared_(shared),
 				goPcPtr_(goPcPtr) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
+	factory_ = shared->GetPeerConnectionFactory(url);
 }
 
 Peer::~Peer() {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (peer_connection_) {
+		factory_->RemoveOnePeerConnection();
 		peer_connection_->Close();
 	}
 	Close();
@@ -61,16 +63,14 @@ Peer::~Peer() {
 
 // public
 void Peer::CreateAnswer(string& sdp) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (!CreatePeerConnection()) {
 		console->error() << "Failed to initialize our PeerConnection instance";
 		return;
 	}
 
 	webrtc::SessionDescriptionInterface* session_description(
-			webrtc::CreateSessionDescription(
-					webrtc::SessionDescriptionInterface::kOffer,
-					sdp));
+			webrtc::CreateSessionDescription(webrtc::SessionDescriptionInterface::kOffer, sdp));
 	if (!session_description) {
 		console->error() << "Can't parse received session description message.";
 		return;
@@ -78,18 +78,16 @@ void Peer::CreateAnswer(string& sdp) {
 	peer_connection_->SetRemoteDescription(
 			DummySetSessionDescriptionObserver::Create(),
 			session_description);
-	SPDLOG_DEBUG(console, "SetRemoteDescription ok");
 
 	peer_connection_->CreateAnswer(this, NULL);
 }
 
 void Peer::AddCandidate(webrtc::IceCandidateInterface* candidate) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (!peer_connection_->AddIceCandidate(candidate)) {
 		console->error() << "Failed to apply the received candidate";
 		return;
 	}
-	SPDLOG_DEBUG(console, "AddIceCandidate ok");
 	return;
 }
 
@@ -109,21 +107,18 @@ Shared* Peer::GetShared() {
 
 // "rtsp://218.204.223.237:554/live/1/0547424F573B085C/gsfp90ef4k0a6iap.sdp"
 bool Peer::CreatePeerConnection() {
-	SPDLOG_TRACE(console);
-	std::shared_ptr<one::ComposedPeerConnectionFactory> factory =
-			shared_->GetPeerConnectionFactory(url_);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	// TODO bind to target
-	if (!factory || !factory.get()) {
+	if (!factory_.get()) {
 		console->error() << "Failed to initialize PeerConnectionFactory";
 		return false;
 	}
 
-	peer_connection_ = factory->CreatePeerConnection(this);
+	peer_connection_ = factory_->CreatePeerConnection(this);
 	if (!peer_connection_.get()) {
 		Close();
 		console->error() << "CreatePeerConnection failed";
 	}
-	SPDLOG_DEBUG(console, "CreatePeerConnection ok");
 
 	return peer_connection_.get() != NULL;
 }
@@ -134,17 +129,17 @@ bool Peer::CreatePeerConnection() {
 
 // Called when a remote stream is added
 void Peer::OnAddStream(webrtc::MediaStreamInterface* stream) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	stream->AddRef();
 }
 
 void Peer::OnRemoveStream(webrtc::MediaStreamInterface* stream) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	stream->AddRef();
 }
 
 void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 
 	Json::StyledWriter writer;
 	Json::Value jmessage;
@@ -161,11 +156,8 @@ void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
 }
 
 void Peer::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
-	SPDLOG_TRACE(console);
-	peer_connection_->SetLocalDescription(
-			DummySetSessionDescriptionObserver::Create(),
-			desc);
-	SPDLOG_DEBUG(console, "SetLocalDescription ok");
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
+	peer_connection_->SetLocalDescription(DummySetSessionDescriptionObserver::Create(), desc);
 
 	string sdp;
 	desc->ToString(&sdp);
@@ -182,15 +174,14 @@ void Peer::OnFailure(const string& error) {
 }
 
 void Peer::SendMessage(const string& json_object) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	go_send_to_peer(goPcPtr_, const_cast<char*>(json_object.c_str()));
 }
 
 void Peer::OnMessage(rtc::Message* msg) {
 	switch (msg->message_id) {
 	case RemoteOfferSignal: {
-		RemoteOfferMsgData* offer_data =
-				static_cast<RemoteOfferMsgData*>(msg->pdata);
+		RemoteOfferMsgData* offer_data = static_cast<RemoteOfferMsgData*>(msg->pdata);
 		CreateAnswer(offer_data->data());
 		break;
 	}

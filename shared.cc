@@ -15,7 +15,7 @@ namespace one {
 Shared::Shared(bool dtls) :
 				SignalingThread(new Thread) {
 
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (!SignalingThread->Start()) {
 		console->error() << "Failed to start SignalingThread";
 	}
@@ -24,12 +24,13 @@ Shared::Shared(bool dtls) :
 }
 
 Shared::~Shared() {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (SignalingThread) {
 		SignalingThread->Stop();
 		delete SignalingThread;
 		SignalingThread = NULL;
 	}
+	factories_.clear();
 }
 
 Peer* Shared::CreatePeer(const std::string url, void* goPcPtr) {
@@ -41,7 +42,7 @@ void Shared::DeletePeer(Peer* pc) {
 }
 
 void Shared::InitConstraintsOnce(bool dtls) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	Constraints.SetMandatoryReceiveAudio(false);
 	Constraints.SetMandatoryReceiveVideo(false);
 	if (dtls) {
@@ -52,7 +53,7 @@ void Shared::InitConstraintsOnce(bool dtls) {
 }
 
 void Shared::AddIceServer(string uri, string name, string psd) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	PeerConnectionInterface::IceServer server;
 	server.uri = uri;
 	if (!name.empty()) {
@@ -67,7 +68,7 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 // For ComposedPeerConnectionFactory
 // Will be used in go
 int Shared::AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled) {
-	SPDLOG_TRACE(console);
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	shared_ptr<ComposedPeerConnectionFactory> factory(
 			new ComposedPeerConnectionFactory(this, url, rec_name, rec_enabled));
 	if (!factory.get()) {
@@ -88,10 +89,10 @@ std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(
 	map<string, shared_ptr<ComposedPeerConnectionFactory> >::iterator iter = factories_.find(url);
 
 	if (iter != factories_.end()) {
-		SPDLOG_TRACE(console, "found with {}", url);
+		SPDLOG_TRACE(console, "{} found with {}", __FUNCTION__, url);
 		return iter->second;
 	}
-	SPDLOG_TRACE(console, "not found with {}", url);
+	SPDLOG_TRACE(console, "{} not found with {}", __FUNCTION__, url);
 	return NULL;
 }
 
