@@ -64,7 +64,8 @@ void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
 
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	return reinterpret_cast<void*>(shared->CreatePeer(string(url), goPcPtr));
+	return reinterpret_cast<void*>(shared->SignalingThread->Invoke<Peer*>(
+			rtc::Bind(&Shared::CreatePeer, shared, string(url), goPcPtr)));
 }
 
 void DeletePeer(void* pc) {

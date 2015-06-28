@@ -8,6 +8,7 @@
 #ifndef SHARED_H_
 #define SHARED_H_
 
+#include <map>
 #include "talk/app/webrtc/peerconnectioninterface.h"
 #include "fakeconstraints.h"
 #include "composed_peer_connection_factory.h"
@@ -18,10 +19,15 @@ class Peer;
 
 using std::map;
 using std::string;
-using std::shared_ptr;
+using std::unique_ptr;
+using std::make_shared;
 
 using webrtc::PeerConnectionInterface;
 using rtc::Thread;
+
+enum SignalType {
+	RemoteOfferSignal, RemoteCandidateSignal, DeletePeerSignal, DeleteFactoriesSignal
+};
 
 class Shared: public rtc::MessageHandler {
 public:

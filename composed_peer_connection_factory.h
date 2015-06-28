@@ -17,7 +17,6 @@
 
 namespace one {
 
-using std::map;
 using std::string;
 using std::shared_ptr;
 
@@ -56,7 +55,6 @@ private:
 	string url_;
 	Thread* worker_thread_;
 	Shared* shared_;
-	bool refed_;
 
 	mutable rtc::CriticalSection lock_;
 

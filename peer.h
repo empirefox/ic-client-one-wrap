@@ -19,10 +19,6 @@ typedef rtc::TypedMessageData<Peer*> DeletePeerMsgData;
 typedef rtc::TypedMessageData<string> RemoteOfferMsgData;
 typedef rtc::ScopedMessageData<webrtc::IceCandidateInterface> IceCandidateMsgData;
 
-enum SignalType {
-	RemoteOfferSignal, RemoteCandidateSignal, DeletePeerSignal,
-};
-
 class Peer: public webrtc::PeerConnectionObserver,
 		public webrtc::CreateSessionDescriptionObserver,
 		public rtc::MessageHandler {
@@ -50,8 +46,7 @@ protected:
 	//
 	// PeerConnectionObserver implementation.
 	//
-	virtual void OnStateChange(
-			webrtc::PeerConnectionObserver::StateType state_changed) {
+	virtual void OnStateChange(webrtc::PeerConnectionObserver::StateType state_changed) {
 	}
 	virtual void OnAddStream(webrtc::MediaStreamInterface* stream);
 	virtual void OnRemoveStream(webrtc::MediaStreamInterface* stream);

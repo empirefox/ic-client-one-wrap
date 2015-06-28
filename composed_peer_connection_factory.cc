@@ -19,7 +19,6 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 				url_(url),
 				worker_thread_(new Thread),
 				shared_(shared),
-				refed_(false),
 				decoder_(new GangDecoder(url, rec_name, rec_enabled)),
 				video_(NULL),
 				peers_(0) {
@@ -33,13 +32,16 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	// TODO need stop?
+	worker_thread_->Stop();
 	delete worker_thread_;
+	worker_thread_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
 
 scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeerConnection(
 		PeerConnectionObserver* observer) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	scoped_refptr<PeerConnectionInterface> peer_connection_ = factory_->CreatePeerConnection(
+	auto peer_connection_ = factory_->CreatePeerConnection(
 			shared_->IceServers,
 			&shared_->Constraints,
 			NULL,
@@ -63,7 +65,8 @@ void ComposedPeerConnectionFactory::RemoveOnePeerConnection() {
 	rtc::CritScope cs(&lock_);
 	--peers_;
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "--peers=", peers_)
-	if (!peers_) {
+	if (!peers_ && decoder_->IsVideoAvailable()) {
+		// TODO change to video_ and add ++peers==1 func
 		stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
 	}
 }
@@ -107,8 +110,6 @@ bool ComposedPeerConnectionFactory::Init() {
 		console->error("{} Failed to get media from ({})", __FUNCTION__, url_);
 		return false;
 	}
-
-	// 6. Create stream and unfreeze
 
 	return true;
 }

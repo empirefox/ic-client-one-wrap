@@ -49,16 +49,15 @@ Peer::Peer(const string& url, Shared* shared, void* goPcPtr) :
 				goPcPtr_(goPcPtr) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	factory_ = shared->GetPeerConnectionFactory(url);
+	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory_.use_count())
 }
 
 Peer::~Peer() {
-	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	if (peer_connection_) {
-		factory_->RemoveOnePeerConnection();
-		peer_connection_->Close();
-	}
+	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory_.use_count())
+	factory_->RemoveOnePeerConnection();
 	Close();
 	goPcPtr_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
 
 // public
@@ -97,7 +96,11 @@ bool Peer::connection_active() const {
 
 void Peer::Close() {
 	// close ws
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	peer_connection_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "clear")
+	shared_->SignalingThread->Clear(this);
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
 
 Shared* Peer::GetShared() {
