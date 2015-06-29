@@ -1,5 +1,8 @@
 #include "composed_peer_connection_factory.h"
 
+#include "webrtc/base/bind.h"
+//#include "webrtc/base/platform_thread.h"
+
 #include "one_spdlog_console.h"
 #include "shared.h"
 
@@ -19,13 +22,15 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 				url_(url),
 				worker_thread_(new Thread),
 				shared_(shared),
-				decoder_(new GangDecoder(url, rec_name, rec_enabled)),
+				decoder_(NULL),
 				video_(NULL),
 				peers_(0) {
 
 	if (!worker_thread_->Start()) {
 		console->error() << "worker_thread_ failed to start";
 	}
+//	rtc::PlatformThreadRef current_thread = rtc::CurrentThreadRef();
+	decoder_ = std::make_shared<GangDecoder>(url, rec_name, rec_enabled, worker_thread_);
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 }
 
@@ -71,13 +76,12 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 }
 
 void ComposedPeerConnectionFactory::RemoveOnePeerConnection() {
-	DCHECK(shared_->SignalingThread->IsCurrent());
 	rtc::CritScope cs(&lock_);
 	--peers_;
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "--peers=", peers_)
 	if (!peers_ && decoder_->IsVideoAvailable()) {
 		// TODO change to video_ and add ++peers==1 func
-		stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
+//		stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
 	}
 }
 
@@ -108,7 +112,8 @@ bool ComposedPeerConnectionFactory::Init() {
 
 	// 4. Create VideoSource
 	if (decoder_->IsVideoAvailable()) {
-		video_ = GangVideoCapturer::Create(decoder_);
+		video_ = shared_->SignalingThread->Invoke<GangVideoCapturer*>(
+				rtc::Bind(&GangVideoCapturer::Create, decoder_));
 		if (!video_) {
 			return false;
 		}
