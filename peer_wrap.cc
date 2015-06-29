@@ -36,11 +36,14 @@ void Release(void* sharedPtr) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
 	if (shared) {
 		delete shared;
+		SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "deleted")
 	}
 	rtc::CleanupSSL();
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "CleanupSSL ok")
 	gang::CleanupGangDecoderGlobel();
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "CleanupGangDecoderGlobel ok")
 	one::CleanupOneSpdlog();
-	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
+	std::cout << "Release ok" << std::endl;
 }
 
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd) {
@@ -66,7 +69,7 @@ void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
 
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	return shared->CreatePeer(string(url), goPcPtr);
+	return reinterpret_cast<void*>(new Peer(string(url), shared, goPcPtr));
 }
 
 void DeletePeer(void* pc) {

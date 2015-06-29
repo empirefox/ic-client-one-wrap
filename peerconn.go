@@ -66,6 +66,7 @@ type Conductor interface {
 	Registry(url, recName string, recEnabled bool) bool
 	SetRecordEnabled(url string, recEnabled bool)
 	CreatePeer(url string, send chan []byte) PeerConn
+	DeletePeer(pc PeerConn)
 	AddIceServer(uri, name, psd string)
 }
 
@@ -120,6 +121,14 @@ func (conductor conductor) CreatePeer(url string, send chan []byte) PeerConn {
 	pc.Pointer = C.CreatePeer(curl, conductor.shared, unsafe.Pointer(pc))
 	conductor.peers[pc.Pointer] = pc
 	return pc
+}
+
+func (conductor conductor) DeletePeer(pc PeerConn) {
+	pcPtr := pc.(*peerConn).Pointer
+	if _, ok := conductor.peers[pcPtr]; ok {
+		delete(conductor.peers, pcPtr)
+	}
+	pc.Delete()
 }
 
 func (conductor conductor) AddIceServer(uri, name, psd string) {

@@ -30,6 +30,7 @@ void InitOneSpdlogConsole() {
 }
 
 void CleanupOneSpdlog() {
+	spdlog::drop("console:one");
 	console = NULL;
 }
 
