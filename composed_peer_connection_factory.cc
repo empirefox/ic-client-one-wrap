@@ -31,6 +31,14 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 
 ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
+	stream_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "stream_ ok")
+	audio_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "audio_ ok")
+	decoder_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "decoder_ ok")
+	factory_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "factory_ ok")
 	// TODO need stop?
 	worker_thread_->Stop();
 	delete worker_thread_;
@@ -40,6 +48,7 @@ ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
 
 scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeerConnection(
 		PeerConnectionObserver* observer) {
+	DCHECK(shared_->SignalingThread->IsCurrent());
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	auto peer_connection_ = factory_->CreatePeerConnection(
 			shared_->IceServers,
@@ -62,6 +71,7 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 }
 
 void ComposedPeerConnectionFactory::RemoveOnePeerConnection() {
+	DCHECK(shared_->SignalingThread->IsCurrent());
 	rtc::CritScope cs(&lock_);
 	--peers_;
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "--peers=", peers_)
@@ -80,7 +90,7 @@ bool ComposedPeerConnectionFactory::Init() {
 
 	// 2. Create GangAudioDevice
 	if (decoder_->IsAudioAvailable()) {
-		audio_ = GangAudioDevice::Create(decoder_.get());
+		audio_ = GangAudioDevice::Create(decoder_);
 		if (!audio_.get()) {
 			return false;
 		}
@@ -98,7 +108,7 @@ bool ComposedPeerConnectionFactory::Init() {
 
 	// 4. Create VideoSource
 	if (decoder_->IsVideoAvailable()) {
-		video_ = GangVideoCapturer::Create(decoder_.get());
+		video_ = GangVideoCapturer::Create(decoder_);
 		if (!video_) {
 			return false;
 		}
@@ -115,6 +125,7 @@ bool ComposedPeerConnectionFactory::Init() {
 }
 
 void ComposedPeerConnectionFactory::InitStram() {
+	DCHECK(shared_->SignalingThread->IsCurrent());
 	stream_ = factory_->CreateLocalMediaStream(kStreamLabel);
 	if (decoder_->IsAudioAvailable()) {
 		if (!stream_->AddTrack(

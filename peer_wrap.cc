@@ -22,6 +22,7 @@ extern "C" {
 using std::string;
 using one::Peer;
 using one::Shared;
+using one::console;
 
 void* Init() {
 	one::InitOneSpdlogConsole();
@@ -31,6 +32,7 @@ void* Init() {
 }
 
 void Release(void* sharedPtr) {
+	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
 	if (shared) {
 		delete shared;
@@ -38,6 +40,7 @@ void Release(void* sharedPtr) {
 	rtc::CleanupSSL();
 	gang::CleanupGangDecoderGlobel();
 	one::CleanupOneSpdlog();
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
 
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd) {
@@ -48,8 +51,7 @@ int RegistryUrl(void* sharedPtr, char *url, char *rec_name, int rec_enabled) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
 	string curl = string(url);
 	string crec_name = string(rec_name);
-	return shared->SignalingThread->Invoke<int>(
-			rtc::Bind(&Shared::AddPeerConnectionFactory, shared, curl, crec_name, rec_enabled));
+	return shared->AddPeerConnectionFactory(curl, crec_name, rec_enabled);
 }
 
 void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
@@ -64,17 +66,13 @@ void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
 
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	return reinterpret_cast<void*>(shared->SignalingThread->Invoke<Peer*>(
-			rtc::Bind(&Shared::CreatePeer, shared, string(url), goPcPtr)));
+	return shared->CreatePeer(string(url), goPcPtr);
 }
 
 void DeletePeer(void* pc) {
 	Peer *cpc = reinterpret_cast<Peer*>(pc);
 	if (cpc) {
-		cpc->GetShared()->SignalingThread->Post(
-				cpc->GetShared(),
-				one::DeletePeerSignal,
-				new one::DeletePeerMsgData(cpc));
+		delete cpc;
 	}
 }
 

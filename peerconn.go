@@ -1,6 +1,6 @@
 package rtc
 
-// #cgo CXXFLAGS: -DWEBRTC_POSIX
+// #cgo CXXFLAGS: -DWEBRTC_POSIX -DDEBUG -DWEBRTC_TRACE
 // #cgo CXXFLAGS: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DSPDLOG_NO_DATETIME
 // #cgo CXXFLAGS: -DPEER_INFO_ON
 //
@@ -12,7 +12,7 @@ package rtc
 //
 // #cgo pkg-config: libavcodec libavformat libavfilter libssl
 // #cgo LDFLAGS: -std=gnu++11 -L/home/savage/git/ffmpeg-wrap/Debug -lffmpeg-wrap
-// #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Release -lwebrtc_full
+// #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Debug -lwebrtc_full
 // #cgo LDFLAGS: -lstdc++ -lnss3 -lnssutil3 -lsmime3 -lssl3 -lplds4 -lplc4 -lnspr4 -lX11 -lpthread -lrt -ldl
 //
 // #include <stdlib.h>

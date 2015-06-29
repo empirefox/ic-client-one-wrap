@@ -12,6 +12,8 @@
 
 namespace one {
 
+using std::make_shared;
+
 Shared::Shared(bool dtls) :
 				SignalingThread(new Thread) {
 
@@ -26,7 +28,10 @@ Shared::Shared(bool dtls) :
 Shared::~Shared() {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	factories_.clear();
-	SignalingThread->Post(this, DeleteFactoriesSignal);
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "clear")
+	SignalingThread->Stop();
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "SignalingThread Quit")
+	delete SignalingThread;
 	SignalingThread = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
@@ -84,7 +89,7 @@ int Shared::AddPeerConnectionFactory(const string& url, const string& rec_name, 
 	return 1;
 }
 
-std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(const string& url) {
+Factoty Shared::GetPeerConnectionFactory(const string& url) {
 	auto iter = factories_.find(url);
 	if (iter != factories_.end()) {
 		SPDLOG_TRACE(console, "{} found with {}", __FUNCTION__, url);
@@ -92,22 +97,6 @@ std::shared_ptr<ComposedPeerConnectionFactory> Shared::GetPeerConnectionFactory(
 	}
 	SPDLOG_TRACE(console, "{} not found with {}", __FUNCTION__, url);
 	return NULL;
-}
-
-void Shared::OnMessage(rtc::Message* msg) {
-	switch (msg->message_id) {
-	case DeletePeerSignal: {
-		DeletePeerMsgData* peer_data = static_cast<DeletePeerMsgData*>(msg->pdata);
-		DeletePeer(peer_data->data());
-		break;
-	}
-	case DeleteFactoriesSignal: {
-		SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "DeleteFactoriesSignal")
-		SignalingThread->Quit();
-		SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "SignalingThread Quit")
-		break;
-	}
-	}
 }
 
 } // namespace one

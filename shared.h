@@ -19,17 +19,14 @@ class Peer;
 
 using std::map;
 using std::string;
-using std::unique_ptr;
-using std::make_shared;
+using std::shared_ptr;
 
 using webrtc::PeerConnectionInterface;
 using rtc::Thread;
 
-enum SignalType {
-	RemoteOfferSignal, RemoteCandidateSignal, DeletePeerSignal, DeleteFactoriesSignal
-};
+typedef shared_ptr<ComposedPeerConnectionFactory> Factoty;
 
-class Shared: public rtc::MessageHandler {
+class Shared {
 public:
 	Shared(bool dtls);
 	~Shared();
@@ -42,10 +39,7 @@ public:
 	// Must after AddIceServer
 	// Will be used in go
 	int AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled);
-	shared_ptr<ComposedPeerConnectionFactory> GetPeerConnectionFactory(const string& url);
-
-	// implements the MessageHandler interface
-	void OnMessage(rtc::Message* msg);
+	Factoty GetPeerConnectionFactory(const string& url);
 
 	PeerConnectionInterface::IceServers IceServers;
 	webrtc::FakeConstraints Constraints;
@@ -54,7 +48,7 @@ public:
 private:
 	void InitConstraintsOnce(bool dtls);
 
-	map<string, shared_ptr<ComposedPeerConnectionFactory> > factories_;
+	map<string, Factoty> factories_;
 };
 
 } // namespace one

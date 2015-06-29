@@ -19,6 +19,10 @@ typedef rtc::TypedMessageData<Peer*> DeletePeerMsgData;
 typedef rtc::TypedMessageData<string> RemoteOfferMsgData;
 typedef rtc::ScopedMessageData<webrtc::IceCandidateInterface> IceCandidateMsgData;
 
+enum SignalType {
+	RemoteOfferSignal, RemoteCandidateSignal
+};
+
 class Peer: public webrtc::PeerConnectionObserver,
 		public webrtc::CreateSessionDescriptionObserver,
 		public rtc::MessageHandler {
@@ -83,7 +87,7 @@ protected:
 	std::string url_;
 	Shared* shared_;
 	void* goPcPtr_;
-	std::shared_ptr<one::ComposedPeerConnectionFactory> factory_;
+	one::Factoty factory_;
 	rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection_;
 };
 

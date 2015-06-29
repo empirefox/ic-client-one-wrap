@@ -55,6 +55,7 @@ Peer::Peer(const string& url, Shared* shared, void* goPcPtr) :
 Peer::~Peer() {
 	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory_.use_count())
 	factory_->RemoveOnePeerConnection();
+	factory_ = NULL;
 	Close();
 	goPcPtr_ = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
