@@ -36,14 +36,14 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 
 ComposedPeerConnectionFactory::~ComposedPeerConnectionFactory() {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	stream_ = NULL;
-	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "stream_ ok")
 	audio_ = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "audio_ ok")
 	decoder_ = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "decoder_ ok")
 	factory_ = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "factory_ ok")
+	stream_ = NULL;
+	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "stream_ ok")
 	// TODO need stop?
 	worker_thread_->Stop();
 	delete worker_thread_;
@@ -81,7 +81,7 @@ void ComposedPeerConnectionFactory::RemoveOnePeerConnection() {
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "--peers=", peers_)
 	if (!peers_ && decoder_->IsVideoAvailable()) {
 		// TODO change to video_ and add ++peers==1 func
-//		stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
+		stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
 	}
 }
 

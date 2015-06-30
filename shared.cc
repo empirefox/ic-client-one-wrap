@@ -27,7 +27,10 @@ Shared::Shared(bool dtls) :
 
 Shared::~Shared() {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	factories_.clear();
+	{
+		rtc::CritScope cs(&factories_lock_);
+		factories_.clear();
+	}
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "clear")
 	SignalingThread->Stop();
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "SignalingThread Quit")
@@ -37,10 +40,12 @@ Shared::~Shared() {
 }
 
 Peer* Shared::CreatePeer(const std::string url, void* goPcPtr) {
+	rtc::CritScope cs(&peer_lock_);
 	return new Peer(url, this, goPcPtr);
 }
 
 void Shared::DeletePeer(Peer* pc) {
+	rtc::CritScope cs(&peer_lock_);
 	delete pc;
 }
 
@@ -72,6 +77,7 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 // Will be used in go
 int Shared::AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
+	rtc::CritScope cs(&factories_lock_);
 	auto factory = make_shared<ComposedPeerConnectionFactory>(this, url, rec_name, rec_enabled);
 	if (!factory.get()) {
 		console->error("Failed to create ComposedPeerConnectionFactory with {}", url);
@@ -90,6 +96,7 @@ int Shared::AddPeerConnectionFactory(const string& url, const string& rec_name, 
 }
 
 Factoty Shared::GetPeerConnectionFactory(const string& url) {
+	rtc::CritScope cs(&factories_lock_);
 	auto iter = factories_.find(url);
 	if (iter != factories_.end()) {
 		SPDLOG_TRACE(console, "{} found with {}", __FUNCTION__, url);

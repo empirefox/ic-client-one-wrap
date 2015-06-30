@@ -45,6 +45,9 @@ public:
 	webrtc::FakeConstraints Constraints;
 	Thread* SignalingThread;
 
+	mutable rtc::CriticalSection peer_lock_;
+	mutable rtc::CriticalSection factories_lock_;
+
 private:
 	void InitConstraintsOnce(bool dtls);
 
