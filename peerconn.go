@@ -20,6 +20,7 @@ package rtc
 // #include "peer_wrap.h"
 import "C"
 import (
+	"sync"
 	"unsafe"
 
 	"github.com/golang/glog"
@@ -72,8 +73,9 @@ type Conductor interface {
 }
 
 type conductor struct {
-	shared unsafe.Pointer
-	peers  map[unsafe.Pointer]PeerConn
+	shared     unsafe.Pointer
+	peers      map[unsafe.Pointer]PeerConn
+	peersMutex sync.Mutex
 }
 
 func NewConductor() Conductor {
@@ -83,10 +85,12 @@ func NewConductor() Conductor {
 	}
 }
 
+// make sure no peer get/set during call
 func (conductor conductor) Release() {
 	for _, pc := range conductor.peers {
 		pc.Delete()
 	}
+	conductor.peers = nil
 	C.Release(conductor.shared)
 }
 
@@ -120,15 +124,19 @@ func (conductor conductor) CreatePeer(url string, send chan []byte) PeerConn {
 
 	pc := &peerConn{send: send}
 	pc.Pointer = C.CreatePeer(curl, conductor.shared, unsafe.Pointer(pc))
+	conductor.peersMutex.Lock()
 	conductor.peers[pc.Pointer] = pc
+	conductor.peersMutex.Unlock()
 	return pc
 }
 
 func (conductor conductor) DeletePeer(pc PeerConn) {
 	pcPtr := pc.(*peerConn).Pointer
+	conductor.peersMutex.Lock()
 	if _, ok := conductor.peers[pcPtr]; ok {
 		delete(conductor.peers, pcPtr)
 	}
+	conductor.peersMutex.Unlock()
 	pc.Delete()
 }
 
