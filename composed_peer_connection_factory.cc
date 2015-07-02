@@ -69,6 +69,14 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 	if (!peer_connection_->AddStream(stream_)) {
 		console->error("Adding stream to PeerConnection failed ({})", url_);
 	}
+	if (!peers_) {
+		if (decoder_->IsVideoAvailable()){
+			stream_->FindVideoTrack(kVideoLabel)->GetSource()->Restart();
+		}
+		if (audio_.get()) {
+			audio_->StartRecording();
+		}
+	}
 	++peers_;
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "++peers=", peers_)
 
@@ -79,9 +87,13 @@ void ComposedPeerConnectionFactory::RemoveOnePeerConnection() {
 	rtc::CritScope cs(&lock_);
 	--peers_;
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "--peers=", peers_)
-	if (!peers_ && decoder_->IsVideoAvailable()) {
-		// TODO change to video_ and add ++peers==1 func
-		stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
+	if (!peers_) {
+		if (decoder_->IsVideoAvailable()){
+			stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
+		}
+		if (audio_.get()) {
+			audio_->StopRecording();
+		}
 	}
 }
 
