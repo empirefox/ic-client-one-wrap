@@ -70,11 +70,11 @@ scoped_refptr<PeerConnectionInterface> ComposedPeerConnectionFactory::CreatePeer
 		console->error("Adding stream to PeerConnection failed ({})", url_);
 	}
 	if (!peers_) {
-		if (decoder_->IsVideoAvailable()){
+		if (decoder_->IsVideoAvailable()) {
 			stream_->FindVideoTrack(kVideoLabel)->GetSource()->Restart();
 		}
 		if (audio_.get()) {
-			audio_->StartRecording();
+			worker_thread_->Invoke<void>(rtc::Bind(&GangAudioDevice::StartRecording, audio_.get()));
 		}
 	}
 	++peers_;
@@ -88,11 +88,13 @@ void ComposedPeerConnectionFactory::RemoveOnePeerConnection() {
 	--peers_;
 	SPDLOG_TRACE(console, "{} {} {}", __FUNCTION__, "--peers=", peers_)
 	if (!peers_) {
-		if (decoder_->IsVideoAvailable()){
-			stream_->FindVideoTrack(kVideoLabel)->GetSource()->Stop();
+		if (decoder_->IsVideoAvailable()) {
+			auto source = stream_->FindVideoTrack(kVideoLabel)->GetSource();
+			source->Stop();
+			source->Stop();
 		}
 		if (audio_.get()) {
-			audio_->StopRecording();
+			worker_thread_->Invoke<void>(rtc::Bind(&GangAudioDevice::StopRecording, audio_.get()));
 		}
 	}
 }
