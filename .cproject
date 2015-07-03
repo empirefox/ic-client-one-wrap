@@ -61,7 +61,7 @@
 							<tool commandLinePattern="${COMMAND} ${INPUTS} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT}" errorParsers="org.eclipse.cdt.core.GLDErrorParser" id="cdt.managedbuild.tool.gnu.cpp.linker.base.1410907804" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.base">
 								<option id="gnu.cpp.link.option.flags.1845277359" name="Linker flags" superClass="gnu.cpp.link.option.flags" value="`pkg-config --libs libssl nss x11 libavcodec libavformat libavfilter`" valueType="string"/>
 								<option id="gnu.cpp.link.option.libs.1375275502" name="Libraries (-l)" superClass="gnu.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="ffmpeg-wrap"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="ffmpeg-wrap"/>
 									<listOptionValue builtIn="false" value="webrtc_full"/>
 									<listOptionValue builtIn="false" value="stdc++"/>
 									<listOptionValue builtIn="false" value="pthread"/>
@@ -69,7 +69,7 @@
 									<listOptionValue builtIn="false" value="dl"/>
 								</option>
 								<option id="gnu.cpp.link.option.paths.135902739" name="Library search path (-L)" superClass="gnu.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ffmpeg-wrap/Debug}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ffmpeg-wrap/Release}&quot;"/>
 									<listOptionValue builtIn="false" value="/home/savage/soft/webrtc/webrtc-linux64/lib/Release"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.linker.input.1697926640" superClass="cdt.managedbuild.tool.gnu.cpp.linker.input">
@@ -91,7 +91,7 @@
 				<externalSettings containerId="ffmpeg-wrap;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/ffmpeg-wrap"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ffmpeg-wrap/Debug"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/ffmpeg-wrap/Release"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="ffmpeg-wrap" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>

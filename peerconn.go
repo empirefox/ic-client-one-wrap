@@ -1,9 +1,14 @@
 // debug info use  -DDCHECK_ALWAYS_ON -DWEBRTC_TRACE
+// sdplog: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DPEER_INFO_ON -DSPDLOG_NO_DATETIME
+// Macro-Logger: -DLOG_LEVEL=1 0:NO_LOGS,1:ERROR,2:INFO,3:DEBUG
+// ffmpeg log: -DGANG_AV_LOG quiet:-8,panic:0,fatal:8,error:16
+//            warning:24,info:32,verbose:40,debug:48,trace:56
 package rtc
 
 // #cgo CXXFLAGS: -DWEBRTC_POSIX
-// #cgo CXXFLAGS: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DSPDLOG_NO_DATETIME
-// #cgo CXXFLAGS: -DPEER_INFO_ON
+// #cgo CXXFLAGS: -DGANG_AV_LOG=8
+// #cgo CXXFLAGS: -DSPDLOG_NO_DATETIME
+// #cgo CXXFLAGS: -DPEER_INFO_ON -DLOG_LEVEL=1
 //
 // #cgo CXXFLAGS: -std=c++11 -fno-rtti
 // #cgo CXXFLAGS: -I/home/savage/git/webrtcbuilds
@@ -12,8 +17,8 @@ package rtc
 // #cgo CXXFLAGS: -I/home/savage/git/spdlog/include
 //
 // #cgo pkg-config: libavcodec libavformat libavfilter libssl nss x11
-// #cgo LDFLAGS: -std=gnu++11 -L/home/savage/git/ffmpeg-wrap/Debug -lffmpeg-wrap
-// #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Debug -lwebrtc_full
+// #cgo LDFLAGS: -std=gnu++11 -L/home/savage/git/ffmpeg-wrap/Release -lffmpeg-wrap
+// #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Release -lwebrtc_full
 // #cgo LDFLAGS: -lstdc++ -lpthread -lrt -ldl
 //
 // #include <stdlib.h>
@@ -154,14 +159,12 @@ func (conductor conductor) AddIceServer(uri, name, psd string) {
 }
 
 func (pc *peerConn) SendMessage(msg string) {
-	glog.Infoln("SendMessage:")
 	pc.send <- []byte(msg)
-	glog.Infoln("SendMessage ok")
 }
 
 //export go_send_to_peer
 func go_send_to_peer(pcPtr unsafe.Pointer, msg *C.char) {
-	glog.Infoln("go_send_to_peer")
 	pc := (*peerConn)(pcPtr)
 	pc.SendMessage(C.GoString(msg))
+	glog.Infoln("go_send_to_peer ok")
 }
