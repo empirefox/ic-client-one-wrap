@@ -126,8 +126,7 @@ bool ComposedPeerConnectionFactory::Init() {
 
 	// 4. Create VideoSource
 	if (decoder_->IsVideoAvailable()) {
-		video_ = shared_->SignalingThread->Invoke<GangVideoCapturer*>(
-				rtc::Bind(&GangVideoCapturer::Create, decoder_));
+		video_ = GangVideoCapturer::Create(decoder_, shared_->SignalingThread);
 		if (!video_) {
 			return false;
 		}
