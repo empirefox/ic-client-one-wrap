@@ -33,9 +33,8 @@ void* Init() {
 
 void Release(void* sharedPtr) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	if (shared) {
-		delete shared;
+	if (sharedPtr) {
+		delete reinterpret_cast<Shared*>(sharedPtr);
 		SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "deleted")
 	}
 	rtc::CleanupSSL();
@@ -73,8 +72,8 @@ void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
 }
 
 void DeletePeer(void* pc) {
-	Peer *cpc = reinterpret_cast<Peer*>(pc);
-	if (cpc) {
+	if (pc) {
+		Peer *cpc = reinterpret_cast<Peer*>(pc);
 		cpc->GetShared()->DeletePeer(cpc);
 	}
 }
