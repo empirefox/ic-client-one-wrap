@@ -92,11 +92,13 @@ void AddCandidate(void* pc, char* sdp, char* mid, int line) {
 	Peer *cpc = reinterpret_cast<Peer*>(pc);
 	string csdp = string(sdp);
 	string cmid = string(mid);
-	rtc::scoped_ptr<webrtc::IceCandidateInterface> candidate(
-			webrtc::CreateIceCandidate(cmid, line, csdp));
 
+	webrtc::SdpParseError error;
+	rtc::scoped_ptr<webrtc::IceCandidateInterface> candidate(
+			webrtc::CreateIceCandidate(cmid, line, csdp, &error));
 	if (!candidate.get()) {
-		one::console->error() << "Can't parse received candidate message.";
+		one::console->error() << "Can't parse received candidate message. " << "SdpParseError was: "
+				<< error.description;
 		return;
 	}
 

@@ -14,6 +14,7 @@
 namespace one {
 
 using std::string;
+using webrtc::SessionDescriptionInterface;
 
 // Names used for a IceCandidate JSON object.
 const char kCandidateSdpMidName[] = "sdpMid";
@@ -70,10 +71,12 @@ void Peer::CreateAnswer(string& sdp) {
 		return;
 	}
 
-	webrtc::SessionDescriptionInterface* session_description(
-			webrtc::CreateSessionDescription(webrtc::SessionDescriptionInterface::kOffer, sdp));
+	webrtc::SdpParseError error;
+	SessionDescriptionInterface* session_description(
+			webrtc::CreateSessionDescription(SessionDescriptionInterface::kOffer, sdp, &error));
 	if (!session_description) {
-		console->error() << "Can't parse received session description message.";
+		console->error() << "Can't parse received session description message. "
+				<< "SdpParseError was: " << error.description;
 		return;
 	}
 	peer_connection_->SetRemoteDescription(
