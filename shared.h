@@ -26,10 +26,12 @@ using rtc::Thread;
 
 typedef shared_ptr<ComposedPeerConnectionFactory> Factoty;
 
-class Shared {
+class Shared: public gang::StatusObserver {
 public:
-	Shared(bool dtls);
-	~Shared();
+	Shared(void* goConductorPtr, bool dtls);
+	virtual ~Shared();
+
+	virtual void OnStatusChange(const std::string& id, gang::GangStatus status);
 
 	Peer* CreatePeer(const std::string url, void* goPcPtr);
 	void DeletePeer(Peer* pc);
@@ -38,7 +40,11 @@ public:
 
 	// Must after AddIceServer
 	// Will be used in go
-	int AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled);
+	int AddPeerConnectionFactory(
+			const string& id,
+			const string& url,
+			const string& rec_name,
+			bool rec_enabled);
 	Factoty GetPeerConnectionFactory(const string& url);
 
 	PeerConnectionInterface::IceServers IceServers;
@@ -52,6 +58,7 @@ private:
 	void InitConstraintsOnce(bool dtls);
 
 	map<string, Factoty> factories_;
+	void* goConductorPtr_;
 };
 
 } // namespace one

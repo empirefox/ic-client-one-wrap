@@ -9,13 +9,15 @@
 
 #include "peer.h"
 #include "one_spdlog_console.h"
+#include "cgo.h"
 
 namespace one {
 
 using std::make_shared;
 
-Shared::Shared(bool dtls) :
-				SignalingThread(new Thread) {
+Shared::Shared(void* goConductorPtr, bool dtls) :
+				SignalingThread(new Thread),
+				goConductorPtr_(goConductorPtr) {
 
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (!SignalingThread->Start()) {
@@ -37,6 +39,12 @@ Shared::~Shared() {
 	delete SignalingThread;
 	SignalingThread = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
+}
+
+void Shared::OnStatusChange(const std::string& id, gang::GangStatus status) {
+	if (goConductorPtr_) {
+		::go_on_gang_status(goConductorPtr_, const_cast<char*>(id.c_str()), status);
+	}
 }
 
 Peer* Shared::CreatePeer(const std::string url, void* goPcPtr) {
@@ -75,10 +83,11 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 
 // For ComposedPeerConnectionFactory
 // Will be used in go
-int Shared::AddPeerConnectionFactory(const string& url, const string& rec_name, bool rec_enabled) {
+int Shared::AddPeerConnectionFactory(const string& id, const string& url, const string& rec_name,
+bool rec_enabled) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	rtc::CritScope cs(&factories_lock_);
-	auto factory = make_shared<ComposedPeerConnectionFactory>(this, url, rec_name, rec_enabled);
+	auto factory = make_shared<ComposedPeerConnectionFactory>(this, id, url, rec_name, rec_enabled);
 	if (!factory.get()) {
 		console->error("Failed to create ComposedPeerConnectionFactory with {}", url);
 		return 0;

@@ -38,6 +38,7 @@ class ComposedPeerConnectionFactory {
 public:
 	ComposedPeerConnectionFactory(
 			Shared* shared,
+			const string& id,
 			const string& url,
 			const string& rec_name,
 			bool rec_enabled);
@@ -52,7 +53,7 @@ public:
 
 private:
 
-	string url_;
+	const string id_;
 	Thread* worker_thread_;
 	Shared* shared_;
 

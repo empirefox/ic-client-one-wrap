@@ -24,11 +24,11 @@ using one::Peer;
 using one::Shared;
 using one::console;
 
-void* Init() {
+void* Init(void* goConductorPtr) {
 	one::InitOneSpdlogConsole();
 	gang::InitializeGangDecoderGlobel();
 	rtc::InitializeSSL();
-	return reinterpret_cast<void*>(new Shared(DTLS_ON));
+	return reinterpret_cast<void*>(new Shared(goConductorPtr, DTLS_ON));
 }
 
 void Release(void* sharedPtr) {
@@ -49,11 +49,12 @@ void AddICE(void* sharedPtr, char *uri, char *name, char *psd) {
 	reinterpret_cast<Shared*>(sharedPtr)->AddIceServer(string(uri), string(name), string(psd));
 }
 
-int RegistryUrl(void* sharedPtr, char *url, char *rec_name, int rec_enabled) {
+int RegistryCam(void* sharedPtr, char *id, char *url, char *rec_name, int rec_enabled) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
+	string cid = string(id);
 	string curl = string(url);
 	string crec_name = string(rec_name);
-	return shared->AddPeerConnectionFactory(curl, crec_name, rec_enabled);
+	return shared->AddPeerConnectionFactory(cid, curl, crec_name, rec_enabled);
 }
 
 void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {

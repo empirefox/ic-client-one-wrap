@@ -31,6 +31,16 @@ import (
 	"github.com/golang/glog"
 )
 
+// according to wrap
+const (
+	ALIVE uint = 0
+	DEAD  uint = 1
+)
+
+type StatusObserver interface {
+	OnGangStatus(id string, status uint)
+}
+
 ////////////////////////////////////
 //            PeerConn
 ////////////////////////////////////
@@ -70,7 +80,7 @@ func (pc peerConn) AddCandidate(sdp, mid string, line int) {
 ////////////////////////////////////
 type Conductor interface {
 	Release()
-	Registry(url, recName string, recEnabled bool) bool
+	Registry(id, url, recName string, recEnabled bool) bool
 	SetRecordEnabled(url string, recEnabled bool)
 	CreatePeer(url string, send chan []byte) PeerConn
 	DeletePeer(pc PeerConn)
@@ -78,16 +88,19 @@ type Conductor interface {
 }
 
 type conductor struct {
-	shared     unsafe.Pointer
-	peers      map[unsafe.Pointer]PeerConn
-	peersMutex sync.Mutex
+	shared         unsafe.Pointer
+	peers          map[unsafe.Pointer]PeerConn
+	peersMutex     sync.Mutex
+	statusObserver StatusObserver
 }
 
-func NewConductor() Conductor {
-	return &conductor{
-		shared: C.Init(),
-		peers:  make(map[unsafe.Pointer]PeerConn),
+func NewConductor(so StatusObserver) Conductor {
+	c := &conductor{
+		peers:          make(map[unsafe.Pointer]PeerConn),
+		statusObserver: so,
 	}
+	c.shared = C.Init(unsafe.Pointer(c))
+	return c
 }
 
 // make sure no peer get/set during call
@@ -99,7 +112,9 @@ func (conductor conductor) Release() {
 	C.Release(conductor.shared)
 }
 
-func (conductor conductor) Registry(url, recName string, recEnabled bool) bool {
+func (conductor conductor) Registry(id, url, recName string, recEnabled bool) bool {
+	cid := C.CString(id)
+	defer C.free(unsafe.Pointer(cid))
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 	crecName := C.CString(recName)
@@ -109,7 +124,7 @@ func (conductor conductor) Registry(url, recName string, recEnabled bool) bool {
 		enabled = C.int(1)
 	}
 
-	ok := C.RegistryUrl(conductor.shared, curl, crecName, enabled)
+	ok := C.RegistryCam(conductor.shared, cid, curl, crecName, enabled)
 	return int(ok) != 0
 }
 
@@ -167,4 +182,9 @@ func go_send_to_peer(pcPtr unsafe.Pointer, msg *C.char) {
 	pc := (*peerConn)(pcPtr)
 	pc.SendMessage(C.GoString(msg))
 	glog.Infoln("go_send_to_peer ok")
+}
+
+//export go_on_gang_status
+func go_on_gang_status(conductorPtr unsafe.Pointer, id *C.char, status C.uint) {
+	(*conductor)(conductorPtr).statusObserver.OnGangStatus(C.GoString(id), uint(status))
 }

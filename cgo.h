@@ -3,11 +3,10 @@
 #pragma once
 
 #ifdef NO_CGO
-#include <ostream>
+
 extern void go_send_to_peer(void* goPcPtr_, char* msg);
-void go_send_to_peer(void* goPcPtr_, char* msg) {
-	printf("go_send_to_peer: %s\n", msg);
-}
+extern void go_on_gang_status(void* goConductorPtr_, char* id, unsigned int status);
+
 #else
 extern "C" {
 #include "_cgo_export.h"
