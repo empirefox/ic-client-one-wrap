@@ -51,7 +51,7 @@ type PeerConn interface {
 }
 
 type peerConn struct {
-	send chan []byte
+	send func([]byte)
 	unsafe.Pointer
 }
 
@@ -82,7 +82,7 @@ type Conductor interface {
 	Release()
 	Registry(id, url, recName string, recEnabled bool) bool
 	SetRecordEnabled(url string, recEnabled bool)
-	CreatePeer(url string, send chan []byte) PeerConn
+	CreatePeer(url string, send func([]byte)) PeerConn
 	DeletePeer(pc PeerConn)
 	AddIceServer(uri, name, psd string)
 }
@@ -138,7 +138,7 @@ func (conductor conductor) SetRecordEnabled(url string, recEnabled bool) {
 	C.SetRecordEnabled(conductor.shared, curl, enabled)
 }
 
-func (conductor conductor) CreatePeer(url string, send chan []byte) PeerConn {
+func (conductor conductor) CreatePeer(url string, send func([]byte)) PeerConn {
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 
@@ -174,7 +174,7 @@ func (conductor conductor) AddIceServer(uri, name, psd string) {
 }
 
 func (pc *peerConn) SendMessage(msg string) {
-	pc.send <- []byte(msg)
+	pc.send([]byte(msg))
 }
 
 //export go_send_to_peer

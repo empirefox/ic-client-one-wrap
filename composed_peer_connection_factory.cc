@@ -113,6 +113,8 @@ bool ComposedPeerConnectionFactory::Init() {
 		return false;
 	}
 
+	decoder_->StartRec();
+
 	// 2. Create GangAudioDevice
 	if (decoder_->IsAudioAvailable()) {
 		audio_ = GangAudioDevice::Create(decoder_);
