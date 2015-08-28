@@ -19,7 +19,8 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 		const string& id,
 		const string& url,
 		const string& rec_name,
-		bool rec_enabled) :
+		bool rec_enabled,
+		bool audio_off) :
 				id_(id),
 				worker_thread_(new Thread),
 				shared_(shared),
@@ -36,6 +37,7 @@ ComposedPeerConnectionFactory::ComposedPeerConnectionFactory(
 			url,
 			rec_name,
 			rec_enabled,
+			audio_off,
 			worker_thread_,
 			shared);
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)

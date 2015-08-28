@@ -8,7 +8,7 @@ package rtc
 // #cgo CXXFLAGS: -DWEBRTC_POSIX
 // #cgo CXXFLAGS: -DGANG_AV_LOG=8
 // #cgo CXXFLAGS: -DSPDLOG_NO_DATETIME
-// #cgo CXXFLAGS: -DPEER_INFO_ON -DLOG_LEVEL=1
+// #cgo CXXFLAGS: -DLOG_LEVEL=0
 //
 // #cgo CXXFLAGS: -std=c++11 -fno-rtti
 // #cgo CXXFLAGS: -I/home/savage/git/webrtcbuilds
@@ -80,7 +80,7 @@ func (pc peerConn) AddCandidate(sdp, mid string, line int) {
 ////////////////////////////////////
 type Conductor interface {
 	Release()
-	Registry(id, url, recName string, recEnabled bool) bool
+	Registry(id, url, recName string, recEnabled, isAudioOff bool) bool
 	SetRecordEnabled(url string, recEnabled bool)
 	CreatePeer(url string, send func([]byte)) PeerConn
 	DeletePeer(pc PeerConn)
@@ -112,19 +112,22 @@ func (conductor conductor) Release() {
 	C.Release(conductor.shared)
 }
 
-func (conductor conductor) Registry(id, url, recName string, recEnabled bool) bool {
+func (conductor conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) bool {
 	cid := C.CString(id)
 	defer C.free(unsafe.Pointer(cid))
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 	crecName := C.CString(recName)
 	defer C.free(unsafe.Pointer(crecName))
-	enabled := C.int(0)
+	enabled, audioOff := C.int(0), C.int(0)
 	if recEnabled {
 		enabled = C.int(1)
 	}
+	if isAudioOff {
+		audioOff = C.int(1)
+	}
 
-	ok := C.RegistryCam(conductor.shared, cid, curl, crecName, enabled)
+	ok := C.RegistryCam(conductor.shared, cid, curl, crecName, enabled, audioOff)
 	return int(ok) != 0
 }
 

@@ -44,7 +44,8 @@ public:
 			const string& id,
 			const string& url,
 			const string& rec_name,
-			bool rec_enabled);
+			bool rec_enabled,
+			bool audio_off);
 	Factoty GetPeerConnectionFactory(const string& url);
 
 	PeerConnectionInterface::IceServers IceServers;

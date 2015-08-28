@@ -8,7 +8,13 @@
 void* Init(void* goConductorPtr);
 void Release(void* shared);
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd);
-int RegistryCam(void* sharedPtr, char *id, char *url, char *rec_name, int rec_enabled);
+int RegistryCam(
+		void* sharedPtr,
+		char *id,
+		char *url,
+		char *rec_name,
+		int rec_enabled,
+		int audio_off);
 void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled);
 void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr);
 void DeletePeer(void* pc);
