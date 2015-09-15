@@ -10,8 +10,9 @@
 
 #include <map>
 #include "talk/app/webrtc/peerconnectioninterface.h"
+
+#include "composed_pc_factory.h"
 #include "fakeconstraints.h"
-#include "composed_peer_connection_factory.h"
 
 namespace one {
 
@@ -24,7 +25,7 @@ using std::shared_ptr;
 using webrtc::PeerConnectionInterface;
 using rtc::Thread;
 
-typedef shared_ptr<ComposedPeerConnectionFactory> Factoty;
+typedef shared_ptr<ComposedPCFactory> Factoty;
 
 class Shared: public gang::StatusObserver {
 public:
@@ -50,6 +51,7 @@ public:
 
 	PeerConnectionInterface::IceServers IceServers;
 	webrtc::FakeConstraints Constraints;
+	Thread* MainThread;
 	Thread* SignalingThread;
 
 	mutable rtc::CriticalSection peer_lock_;

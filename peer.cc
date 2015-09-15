@@ -57,12 +57,11 @@ Peer::~Peer() {
 	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory_.use_count())
 	if (factory_.get()) {
 		factory_->RemoveOnePeerConnection();
-		factory_ = NULL;
-	}
-	if (peer_connection_.get()) {
-		peer_connection_->Close();
 	}
 	Close();
+	if (factory_.get()) {
+		factory_ = NULL;
+	}
 	goPcPtr_ = NULL;
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
@@ -104,11 +103,8 @@ bool Peer::connection_active() const {
 }
 
 void Peer::Close() {
-	// close ws
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	peer_connection_ = NULL;
-	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "clear")
-	shared_->SignalingThread->Clear(this);
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "ok")
 }
 
@@ -142,12 +138,10 @@ bool Peer::CreatePeerConnection() {
 // Called when a remote stream is added
 void Peer::OnAddStream(webrtc::MediaStreamInterface* stream) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	stream->AddRef();
 }
 
 void Peer::OnRemoveStream(webrtc::MediaStreamInterface* stream) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	stream->AddRef();
 }
 
 void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
@@ -190,6 +184,7 @@ void Peer::SendMessage(const string& json_object) {
 	go_send_to_peer(goPcPtr_, const_cast<char*>(json_object.c_str()));
 }
 
+// TODO remove
 void Peer::OnMessage(rtc::Message* msg) {
 	switch (msg->message_id) {
 	case RemoteOfferSignal: {

@@ -16,6 +16,7 @@ namespace one {
 using std::make_shared;
 
 Shared::Shared(void* goConductorPtr, bool dtls) :
+				MainThread(rtc::Thread::Current()),
 				SignalingThread(new Thread),
 				goConductorPtr_(goConductorPtr) {
 
@@ -87,13 +88,7 @@ int Shared::AddPeerConnectionFactory(const string& id, const string& url, const 
 bool rec_enabled, bool audio_off) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	rtc::CritScope cs(&factories_lock_);
-	auto factory = make_shared<ComposedPeerConnectionFactory>(
-			this,
-			id,
-			url,
-			rec_name,
-			rec_enabled,
-			audio_off);
+	auto factory = make_shared<ComposedPCFactory>(this, id, url, rec_name, rec_enabled, audio_off);
 	if (!factory.get()) {
 		console->error("Failed to create ComposedPeerConnectionFactory with {}", url);
 		return 0;

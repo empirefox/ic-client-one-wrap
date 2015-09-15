@@ -1,25 +1,26 @@
-// debug info use  -DDCHECK_ALWAYS_ON -DWEBRTC_TRACE
+// debug info use  -DDCHECK_ALWAYS_ON -DWEBRTC_TRACE -DENABLE_DEBUG=1
 // sdplog: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DPEER_INFO_ON -DSPDLOG_NO_DATETIME
 // Macro-Logger: -DLOG_LEVEL=1 0:NO_LOGS,1:ERROR,2:INFO,3:DEBUG
 // ffmpeg log: -DGANG_AV_LOG quiet:-8,panic:0,fatal:8,error:16
 //            warning:24,info:32,verbose:40,debug:48,trace:56
+// -O3 -ggdb
 package rtc
 
 // #cgo CXXFLAGS: -DWEBRTC_POSIX
-// #cgo CXXFLAGS: -DGANG_AV_LOG=8
+// #cgo CXXFLAGS: -DGANG_AV_LOG=0
 // #cgo CXXFLAGS: -DSPDLOG_NO_DATETIME
 // #cgo CXXFLAGS: -DLOG_LEVEL=0
 //
-// #cgo CXXFLAGS: -std=c++11 -fno-rtti
+// #cgo CXXFLAGS: -std=gnu++11 -pthread -Wall -O3 -c -fmessage-length=0 -fno-rtti
 // #cgo CXXFLAGS: -I/home/savage/git/webrtcbuilds
 // #cgo CXXFLAGS: -I/usr/include/jsoncpp
 // #cgo CXXFLAGS: -I/home/savage/git/ffmpeg-wrap
 // #cgo CXXFLAGS: -I/home/savage/git/spdlog/include
 //
-// #cgo pkg-config: libavcodec libavformat libavfilter libssl nss x11
+// #cgo pkg-config: libavcodec libavformat libavfilter libcrypto openssl
 // #cgo LDFLAGS: -std=gnu++11 -L/home/savage/git/ffmpeg-wrap/Release -lffmpeg-wrap
-// #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Release -lwebrtc_full
-// #cgo LDFLAGS: -lstdc++ -lpthread -lrt -ldl
+// #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Debug -lwebrtc_full
+// #cgo LDFLAGS: -pthread -lrt -ldl
 //
 // #include <stdlib.h>
 // #include "peer_wrap.h"

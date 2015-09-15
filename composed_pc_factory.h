@@ -4,8 +4,8 @@
  *  Created on: Apr 30, 2015
  *      Author: savage
  */
-#ifndef COMPOSED_PEER_CONNECTION_FACTORY_H_
-#define COMPOSED_PEER_CONNECTION_FACTORY_H_
+#ifndef COMPOSED_PC_FACTORY_H_
+#define COMPOSED_PC_FACTORY_H_
 #pragma once
 
 #include <memory>
@@ -34,40 +34,38 @@ using gang::GangAudioDevice;
 
 class Shared;
 
-class ComposedPeerConnectionFactory {
+class ComposedPCFactory {
 public:
-	ComposedPeerConnectionFactory(
+	ComposedPCFactory(
 			Shared* shared,
 			const string& id,
 			const string& url,
 			const string& rec_name,
 			bool rec_enabled,
 			bool audio_off);
-	~ComposedPeerConnectionFactory();
+	~ComposedPCFactory();
 
 	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(PeerConnectionObserver* observer);
 	void RemoveOnePeerConnection();
 
 	bool Init();
-	void InitStram();
+	bool CreateFactory();
 	void SetRecordEnabled(bool enabled);
 
 private:
+	void releaseFactory();
 
 	const string id_;
 	Thread* worker_thread_;
 	Shared* shared_;
 
-	mutable rtc::CriticalSection lock_;
-
+	shared_ptr<GangDecoder> decoder_;
 	scoped_refptr<PeerConnectionFactoryInterface> factory_;
 	scoped_refptr<MediaStreamInterface> stream_;
-	shared_ptr<GangDecoder> decoder_;
-	GangVideoCapturer* video_;
-	scoped_refptr<GangAudioDevice> audio_;
 	int peers_;
+	mutable rtc::CriticalSection lock_;
 };
 
 } // namespace one
 
-#endif /* COMPOSED_PEER_CONNECTION_FACTORY_H_ */
+#endif /* COMPOSED_PC_FACTORY_H_ */

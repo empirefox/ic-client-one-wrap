@@ -88,10 +88,7 @@ void DeletePeer(void* pc) {
 void CreateAnswer(void* pc, char* sdp) {
 	Peer *cpc = reinterpret_cast<Peer*>(pc);
 	string csdp = string(sdp);
-	cpc->GetShared()->SignalingThread->Post(
-			cpc,
-			one::RemoteOfferSignal,
-			new one::RemoteOfferMsgData(csdp));
+	cpc->CreateAnswer(csdp);
 }
 
 void AddCandidate(void* pc, char* sdp, char* mid, int line) {
@@ -107,10 +104,6 @@ void AddCandidate(void* pc, char* sdp, char* mid, int line) {
 				<< error.description;
 		return;
 	}
-
-	cpc->GetShared()->SignalingThread->Post(
-			cpc,
-			one::RemoteCandidateSignal,
-			new one::IceCandidateMsgData(candidate.release()));
+	cpc->AddCandidate(candidate.release());
 }
 
