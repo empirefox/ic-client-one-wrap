@@ -56,17 +56,17 @@ type peerConn struct {
 	unsafe.Pointer
 }
 
-func (pc peerConn) Delete() {
+func (pc *peerConn) Delete() {
 	C.DeletePeer(pc.Pointer)
 }
 
-func (pc peerConn) CreateAnswer(sdp string) {
+func (pc *peerConn) CreateAnswer(sdp string) {
 	csdp := C.CString(sdp)
 	defer C.free(unsafe.Pointer(csdp))
 	C.CreateAnswer(pc.Pointer, csdp)
 }
 
-func (pc peerConn) AddCandidate(sdp, mid string, line int) {
+func (pc *peerConn) AddCandidate(sdp, mid string, line int) {
 	csdp := C.CString(sdp)
 	defer C.free(unsafe.Pointer(csdp))
 
@@ -105,15 +105,19 @@ func NewConductor(so StatusObserver) Conductor {
 }
 
 // make sure no peer get/set during call
-func (conductor conductor) Release() {
+func (conductor *conductor) Release() {
+	conductor.peersMutex.Lock()
+	defer conductor.peersMutex.Unlock()
 	for _, pc := range conductor.peers {
+		glog.Infoln("Delete pc")
 		pc.Delete()
+		delete(conductor.peers, pc.(*peerConn).Pointer)
 	}
-	conductor.peers = nil
 	C.Release(conductor.shared)
+	conductor.shared = nil
 }
 
-func (conductor conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) bool {
+func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) bool {
 	cid := C.CString(id)
 	defer C.free(unsafe.Pointer(cid))
 	curl := C.CString(url)
@@ -132,7 +136,7 @@ func (conductor conductor) Registry(id, url, recName string, recEnabled, isAudio
 	return int(ok) != 0
 }
 
-func (conductor conductor) SetRecordEnabled(url string, recEnabled bool) {
+func (conductor *conductor) SetRecordEnabled(url string, recEnabled bool) {
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 	enabled := C.int(0)
@@ -142,29 +146,30 @@ func (conductor conductor) SetRecordEnabled(url string, recEnabled bool) {
 	C.SetRecordEnabled(conductor.shared, curl, enabled)
 }
 
-func (conductor conductor) CreatePeer(url string, send func([]byte)) PeerConn {
+func (conductor *conductor) CreatePeer(url string, send func([]byte)) PeerConn {
 	curl := C.CString(url)
 	defer C.free(unsafe.Pointer(curl))
 
+	conductor.peersMutex.Lock()
+	defer conductor.peersMutex.Unlock()
 	pc := &peerConn{send: send}
 	pc.Pointer = C.CreatePeer(curl, conductor.shared, unsafe.Pointer(pc))
-	conductor.peersMutex.Lock()
 	conductor.peers[pc.Pointer] = pc
-	conductor.peersMutex.Unlock()
 	return pc
 }
 
-func (conductor conductor) DeletePeer(pc PeerConn) {
+func (conductor *conductor) DeletePeer(pc PeerConn) {
 	pcPtr := pc.(*peerConn).Pointer
 	conductor.peersMutex.Lock()
+	defer conductor.peersMutex.Unlock()
 	if _, ok := conductor.peers[pcPtr]; ok {
 		delete(conductor.peers, pcPtr)
 	}
-	conductor.peersMutex.Unlock()
+	glog.Infoln("Delete pc")
 	pc.Delete()
 }
 
-func (conductor conductor) AddIceServer(uri, name, psd string) {
+func (conductor *conductor) AddIceServer(uri, name, psd string) {
 	curi := C.CString(uri)
 	defer C.free(unsafe.Pointer(curi))
 
