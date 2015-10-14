@@ -46,6 +46,7 @@ type StatusObserver interface {
 //            PeerConn
 ////////////////////////////////////
 type PeerConn interface {
+	IsZero() bool
 	Delete()
 	CreateAnswer(sdp string)
 	AddCandidate(sdp, mid string, line int)
@@ -54,6 +55,10 @@ type PeerConn interface {
 type peerConn struct {
 	send func([]byte)
 	unsafe.Pointer
+}
+
+func (pc *peerConn) IsZero() bool {
+	return pc == nil
 }
 
 func (pc *peerConn) Delete() {
@@ -83,7 +88,7 @@ type Conductor interface {
 	Release()
 	Registry(id, url, recName string, recEnabled, isAudioOff bool) bool
 	SetRecordEnabled(url string, recEnabled bool)
-	CreatePeer(url string, send func([]byte)) PeerConn
+	CreatePeer(id string, send func([]byte)) PeerConn
 	DeletePeer(pc PeerConn)
 	AddIceServer(uri, name, psd string)
 }
@@ -146,14 +151,14 @@ func (conductor *conductor) SetRecordEnabled(url string, recEnabled bool) {
 	C.SetRecordEnabled(conductor.shared, curl, enabled)
 }
 
-func (conductor *conductor) CreatePeer(url string, send func([]byte)) PeerConn {
-	curl := C.CString(url)
-	defer C.free(unsafe.Pointer(curl))
+func (conductor *conductor) CreatePeer(id string, send func([]byte)) PeerConn {
+	cid := C.CString(id)
+	defer C.free(unsafe.Pointer(cid))
 
 	conductor.peersMutex.Lock()
 	defer conductor.peersMutex.Unlock()
 	pc := &peerConn{send: send}
-	pc.Pointer = C.CreatePeer(curl, conductor.shared, unsafe.Pointer(pc))
+	pc.Pointer = C.CreatePeer(cid, conductor.shared, unsafe.Pointer(pc))
 	conductor.peers[pc.Pointer] = pc
 	return pc
 }

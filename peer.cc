@@ -4,7 +4,6 @@
  */
 #include "peer.h"
 
-#include "webrtc/base/json.h"
 #include "fakeconstraints.h"
 
 #include "shared.h"
@@ -16,9 +15,10 @@ namespace one {
 using std::string;
 using webrtc::SessionDescriptionInterface;
 
+const char kCameraId[] = "camera";
 // Names used for a IceCandidate JSON object.
-const char kCandidateSdpMidName[] = "sdpMid";
-const char kCandidateSdpMlineIndexName[] = "sdpMLineIndex";
+const char kCandidateSdpMidName[] = "id";
+const char kCandidateSdpMlineIndexName[] = "label";
 const char kCandidateSdpName[] = "candidate";
 
 // Names used for a SessionDescription JSON object.
@@ -44,12 +44,12 @@ protected:
 	}
 };
 
-Peer::Peer(const string& url, Shared* shared, void* goPcPtr) :
-				url_(url),
+Peer::Peer(const string& id, Shared* shared, void* goPcPtr) :
+				id_(id),
 				shared_(shared),
 				goPcPtr_(goPcPtr) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	factory_ = shared->GetPeerConnectionFactory(url);
+	factory_ = shared->GetPeerConnectionFactory(id);
 	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory_.use_count())
 }
 
@@ -158,7 +158,7 @@ void Peer::OnIceCandidate(const webrtc::IceCandidateInterface* candidate) {
 		return;
 	}
 	jmessage[kCandidateSdpName] = sdp;
-	SendMessage(writer.write(jmessage));
+	SendMessage(writer, jmessage);
 }
 
 void Peer::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
@@ -172,16 +172,17 @@ void Peer::OnSuccess(webrtc::SessionDescriptionInterface* desc) {
 	Json::Value jmessage;
 	jmessage[kSessionDescriptionTypeName] = desc->type();
 	jmessage[kSessionDescriptionSdpName] = sdp;
-	SendMessage(writer.write(jmessage));
+	SendMessage(writer, jmessage);
 }
 
 void Peer::OnFailure(const string& error) {
 	console->error("Failed to create sdp ({})", error);
 }
 
-void Peer::SendMessage(const string& json_object) {
+void Peer::SendMessage(Json::StyledWriter& writer, Json::Value& jmessage) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
-	go_send_to_peer(goPcPtr_, const_cast<char*>(json_object.c_str()));
+	jmessage[kCameraId] = id_;
+	go_send_to_peer(goPcPtr_, const_cast<char*>(writer.write(jmessage).c_str()));
 }
 
 // TODO remove

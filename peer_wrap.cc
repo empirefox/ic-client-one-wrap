@@ -73,9 +73,9 @@ void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
 	factory->SetRecordEnabled(rec_enabled);
 }
 
-void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr) {
+void* CreatePeer(char *id, void* sharedPtr, void* goPcPtr) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	return reinterpret_cast<void*>(shared->CreatePeer(string(url), goPcPtr));
+	return reinterpret_cast<void*>(shared->CreatePeer(string(id), goPcPtr));
 }
 
 void DeletePeer(void* pc) {

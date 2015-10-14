@@ -11,6 +11,7 @@
 #include <memory>
 #include "talk/app/webrtc/peerconnectioninterface.h"
 #include "webrtc/base/messagehandler.h"
+#include "webrtc/base/json.h"
 #include "shared.h"
 
 namespace one {
@@ -27,7 +28,7 @@ class Peer: public webrtc::PeerConnectionObserver,
 		public webrtc::CreateSessionDescriptionObserver,
 		public rtc::MessageHandler {
 public:
-	Peer(const std::string& url, Shared* shared, void* goPcPtr);
+	Peer(const std::string& id, Shared* shared, void* goPcPtr);
 	~Peer();
 	//
 	// will export
@@ -81,10 +82,10 @@ protected:
 	// TODO should select ws
 	// use GO FUNC to send a message to the remote peer.
 	// or should use callback to send without json.
-	virtual void SendMessage(const std::string& json_object);
+	virtual void SendMessage(Json::StyledWriter& writer, Json::Value& jmessage);
 
 	// fields
-	std::string url_;
+	std::string id_;
 	Shared* shared_;
 	void* goPcPtr_;
 	one::Factoty factory_;

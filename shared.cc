@@ -48,9 +48,9 @@ void Shared::OnStatusChange(const std::string& id, gang::GangStatus status) {
 	}
 }
 
-Peer* Shared::CreatePeer(const std::string url, void* goPcPtr) {
+Peer* Shared::CreatePeer(const std::string id, void* goPcPtr) {
 	rtc::CritScope cs(&peer_lock_);
-	return new Peer(url, this, goPcPtr);
+	return new Peer(id, this, goPcPtr);
 }
 
 void Shared::DeletePeer(Peer* pc) {
@@ -90,29 +90,29 @@ bool rec_enabled, bool audio_off) {
 	rtc::CritScope cs(&factories_lock_);
 	auto factory = make_shared<ComposedPCFactory>(this, id, url, rec_name, rec_enabled, audio_off);
 	if (!factory.get()) {
-		console->error("Failed to create ComposedPeerConnectionFactory with {}", url);
+		console->error("Failed to create ComposedPeerConnectionFactory with {}: {}", id, url);
 		return 0;
 	}
 
 	if (!factory->Init()) {
-		console->error("Failed to init ComposedPeerConnectionFactory {}", url);
+		console->error("Failed to init ComposedPeerConnectionFactory {}: {}", id, url);
 		return 0;
 	}
 
 	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory.use_count())
-	factories_.insert(make_pair(url, factory));
+	factories_.insert(make_pair(id, factory));
 	SPDLOG_TRACE(console, "{} factory use_count:{}", __FUNCTION__, factory.use_count())
 	return 1;
 }
 
-Factoty Shared::GetPeerConnectionFactory(const string& url) {
+Factoty Shared::GetPeerConnectionFactory(const string& id) {
 	rtc::CritScope cs(&factories_lock_);
-	auto iter = factories_.find(url);
+	auto iter = factories_.find(id);
 	if (iter != factories_.end()) {
-		SPDLOG_TRACE(console, "{} found with {}", __FUNCTION__, url);
+		SPDLOG_TRACE(console, "{} found with {}", __FUNCTION__, id);
 		return iter->second;
 	}
-	SPDLOG_TRACE(console, "{} not found with {}", __FUNCTION__, url);
+	SPDLOG_TRACE(console, "{} not found with {}", __FUNCTION__, id);
 	return NULL;
 }
 

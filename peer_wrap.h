@@ -16,7 +16,7 @@ int RegistryCam(
 		int rec_enabled,
 		int audio_off);
 void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled);
-void* CreatePeer(char *url, void* sharedPtr, void* goPcPtr);
+void* CreatePeer(char *id, void* sharedPtr, void* goPcPtr);
 void DeletePeer(void* pc);
 void CreateAnswer(void* pc, char* sdp);
 void AddCandidate(void* pc, char* sdp, char* mid, int line);
