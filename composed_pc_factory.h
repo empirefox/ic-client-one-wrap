@@ -48,7 +48,7 @@ public:
 	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(PeerConnectionObserver* observer);
 	void RemoveOnePeerConnection();
 
-	bool Init();
+	bool Init(int* width, int* height);
 	bool CreateFactory();
 	void SetRecordEnabled(bool enabled);
 

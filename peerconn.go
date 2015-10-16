@@ -86,7 +86,7 @@ func (pc *peerConn) AddCandidate(sdp, mid string, line int) {
 ////////////////////////////////////
 type Conductor interface {
 	Release()
-	Registry(id, url, recName string, recEnabled, isAudioOff bool) bool
+	Registry(id, url, recName string, recEnabled, isAudioOff bool) (int, int, bool)
 	SetRecordEnabled(url string, recEnabled bool)
 	CreatePeer(id string, send func([]byte)) PeerConn
 	DeletePeer(pc PeerConn)
@@ -122,7 +122,7 @@ func (conductor *conductor) Release() {
 	conductor.shared = nil
 }
 
-func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) bool {
+func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) (int, int, bool) {
 	cid := C.CString(id)
 	defer C.free(unsafe.Pointer(cid))
 	curl := C.CString(url)
@@ -136,9 +136,10 @@ func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudi
 	if isAudioOff {
 		audioOff = C.int(1)
 	}
+	info := C.ipcam_info{width: 0, height: 0}
 
-	ok := C.RegistryCam(conductor.shared, cid, curl, crecName, enabled, audioOff)
-	return int(ok) != 0
+	ok := C.RegistryCam(&info, conductor.shared, cid, curl, crecName, enabled, audioOff)
+	return int(info.width), int(info.height), int(ok) != 0
 }
 
 func (conductor *conductor) SetRecordEnabled(url string, recEnabled bool) {

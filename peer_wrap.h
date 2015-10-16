@@ -5,10 +5,16 @@
 #define PEER_WRAP_H_
 #pragma once
 
+typedef struct ipcam_info {
+	int width;
+	int height;
+} ipcam_info;
+
 void* Init(void* goConductorPtr);
 void Release(void* shared);
 void AddICE(void* sharedPtr, char *uri, char *name, char *psd);
 int RegistryCam(
+		ipcam_info* info,
 		void* sharedPtr,
 		char *id,
 		char *url,

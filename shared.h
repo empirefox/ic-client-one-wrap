@@ -42,6 +42,8 @@ public:
 	// Must after AddIceServer
 	// Will be used in go
 	int AddPeerConnectionFactory(
+			int* width,
+			int* height,
 			const string& id,
 			const string& url,
 			const string& rec_name,

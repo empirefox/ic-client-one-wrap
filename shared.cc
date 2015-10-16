@@ -84,8 +84,14 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 
 // For ComposedPeerConnectionFactory
 // Will be used in go
-int Shared::AddPeerConnectionFactory(const string& id, const string& url, const string& rec_name,
-bool rec_enabled, bool audio_off) {
+int Shared::AddPeerConnectionFactory(
+		int* width,
+		int* height,
+		const string& id,
+		const string& url,
+		const string& rec_name,
+		bool rec_enabled,
+		bool audio_off) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	rtc::CritScope cs(&factories_lock_);
 	auto factory = make_shared<ComposedPCFactory>(this, id, url, rec_name, rec_enabled, audio_off);
@@ -94,7 +100,7 @@ bool rec_enabled, bool audio_off) {
 		return 0;
 	}
 
-	if (!factory->Init()) {
+	if (!factory->Init(width, height)) {
 		console->error("Failed to init ComposedPeerConnectionFactory {}: {}", id, url);
 		return 0;
 	}

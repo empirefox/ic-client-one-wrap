@@ -101,12 +101,13 @@ void ComposedPCFactory::releaseFactory() {
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "factory_ ok")
 }
 
-bool ComposedPCFactory::Init() {
+bool ComposedPCFactory::Init(int* width, int* height) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (!decoder_->Init()) {
 		return false;
 	}
 
+	decoder_->GetVideoRatio(width, height);
 	decoder_->StartRec();
 	return true;
 }
