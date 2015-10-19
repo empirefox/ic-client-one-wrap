@@ -14,6 +14,7 @@
 #include "gang_decoder.h"
 #include "gangvideocapturer.h"
 #include "gang_audio_device.h"
+#include "ipcam_info.h"
 
 namespace one {
 
@@ -48,7 +49,7 @@ public:
 	scoped_refptr<PeerConnectionInterface> CreatePeerConnection(PeerConnectionObserver* observer);
 	void RemoveOnePeerConnection();
 
-	bool Init(int* width, int* height);
+	bool Init(ipcam_info* info);
 	bool CreateFactory();
 	void SetRecordEnabled(bool enabled);
 

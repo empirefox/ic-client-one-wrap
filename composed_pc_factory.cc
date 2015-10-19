@@ -101,13 +101,13 @@ void ComposedPCFactory::releaseFactory() {
 	SPDLOG_TRACE(console, "{} {}", __FUNCTION__, "factory_ ok")
 }
 
-bool ComposedPCFactory::Init(int* width, int* height) {
+bool ComposedPCFactory::Init(ipcam_info* info) {
 	SPDLOG_TRACE(console, "{}", __FUNCTION__)
 	if (!decoder_->Init()) {
 		return false;
 	}
 
-	decoder_->GetVideoRatio(width, height);
+	decoder_->GetClientVideoInfo(&info->width, &info->height, &info->no_video, &info->no_audio);
 	decoder_->StartRec();
 	return true;
 }

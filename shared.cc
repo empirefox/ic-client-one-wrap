@@ -85,8 +85,7 @@ void Shared::AddIceServer(string uri, string name, string psd) {
 // For ComposedPeerConnectionFactory
 // Will be used in go
 int Shared::AddPeerConnectionFactory(
-		int* width,
-		int* height,
+		ipcam_info* info,
 		const string& id,
 		const string& url,
 		const string& rec_name,
@@ -100,7 +99,7 @@ int Shared::AddPeerConnectionFactory(
 		return 0;
 	}
 
-	if (!factory->Init(width, height)) {
+	if (!factory->Init(info)) {
 		console->error("Failed to init ComposedPeerConnectionFactory {}: {}", id, url);
 		return 0;
 	}

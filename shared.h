@@ -13,6 +13,7 @@
 
 #include "composed_pc_factory.h"
 #include "fakeconstraints.h"
+#include "ipcam_info.h"
 
 namespace one {
 
@@ -42,8 +43,7 @@ public:
 	// Must after AddIceServer
 	// Will be used in go
 	int AddPeerConnectionFactory(
-			int* width,
-			int* height,
+			ipcam_info* info,
 			const string& id,
 			const string& url,
 			const string& rec_name,

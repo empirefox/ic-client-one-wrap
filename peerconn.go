@@ -23,6 +23,7 @@ package rtc
 // #cgo LDFLAGS: -pthread -lrt -ldl
 //
 // #include <stdlib.h>
+// #include "ipcam_info.h"
 // #include "peer_wrap.h"
 import "C"
 import (
@@ -40,6 +41,13 @@ const (
 
 type StatusObserver interface {
 	OnGangStatus(id string, status uint)
+}
+
+type IpcamInfo struct {
+	Width  int
+	Height int
+	Video  bool
+	Audio  bool
 }
 
 ////////////////////////////////////
@@ -86,7 +94,7 @@ func (pc *peerConn) AddCandidate(sdp, mid string, line int) {
 ////////////////////////////////////
 type Conductor interface {
 	Release()
-	Registry(id, url, recName string, recEnabled, isAudioOff bool) (int, int, bool)
+	Registry(id, url, recName string, recEnabled, isAudioOff bool) (IpcamInfo, bool)
 	SetRecordEnabled(url string, recEnabled bool)
 	CreatePeer(id string, send func([]byte)) PeerConn
 	DeletePeer(pc PeerConn)
@@ -122,7 +130,7 @@ func (conductor *conductor) Release() {
 	conductor.shared = nil
 }
 
-func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) (int, int, bool) {
+func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudioOff bool) (IpcamInfo, bool) {
 	cid := C.CString(id)
 	defer C.free(unsafe.Pointer(cid))
 	curl := C.CString(url)
@@ -136,10 +144,16 @@ func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudi
 	if isAudioOff {
 		audioOff = C.int(1)
 	}
-	info := C.ipcam_info{width: 0, height: 0}
+	ii := C.ipcam_info{width: 0, height: 0, no_video: 1, no_audio: 1}
 
-	ok := C.RegistryCam(&info, conductor.shared, cid, curl, crecName, enabled, audioOff)
-	return int(info.width), int(info.height), int(ok) != 0
+	ok := C.RegistryCam(&ii, conductor.shared, cid, curl, crecName, enabled, audioOff)
+
+	return IpcamInfo{
+		Width:  int(ii.width),
+		Height: int(ii.height),
+		Video:  int(ii.no_video) == 0,
+		Audio:  int(ii.no_audio) == 0,
+	}, int(ok) != 0
 }
 
 func (conductor *conductor) SetRecordEnabled(url string, recEnabled bool) {

@@ -61,14 +61,7 @@ int RegistryCam(
 	string cid = string(id);
 	string curl = string(url);
 	string crec_name = string(rec_name);
-	return shared->AddPeerConnectionFactory(
-			&info->width,
-			&info->height,
-			cid,
-			curl,
-			crec_name,
-			rec_enabled,
-			audio_off);
+	return shared->AddPeerConnectionFactory(info, cid, curl, crec_name, rec_enabled, audio_off);
 }
 
 void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
