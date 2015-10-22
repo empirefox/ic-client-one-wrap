@@ -156,14 +156,14 @@ func (conductor *conductor) Registry(id, url, recName string, recEnabled, isAudi
 	}, int(ok) != 0
 }
 
-func (conductor *conductor) SetRecordEnabled(url string, recEnabled bool) {
-	curl := C.CString(url)
-	defer C.free(unsafe.Pointer(curl))
+func (conductor *conductor) SetRecordEnabled(id string, recEnabled bool) {
+	cid := C.CString(id)
+	defer C.free(unsafe.Pointer(cid))
 	enabled := C.int(0)
 	if recEnabled {
 		enabled = C.int(1)
 	}
-	C.SetRecordEnabled(conductor.shared, curl, enabled)
+	C.SetRecordEnabled(conductor.shared, cid, enabled)
 }
 
 func (conductor *conductor) CreatePeer(id string, send func([]byte)) PeerConn {

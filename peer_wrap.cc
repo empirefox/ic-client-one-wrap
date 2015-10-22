@@ -64,10 +64,10 @@ int RegistryCam(
 	return shared->AddPeerConnectionFactory(info, cid, curl, crec_name, rec_enabled, audio_off);
 }
 
-void SetRecordEnabled(void* sharedPtr, char *url, int rec_enabled) {
+void SetRecordEnabled(void* sharedPtr, char *id, int rec_enabled) {
 	Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
-	string curl = string(url);
-	auto factory = shared->GetPeerConnectionFactory(curl);
+	string cid = string(id);
+	auto factory = shared->GetPeerConnectionFactory(cid);
 	if (!factory) {
 		return;
 	}
