@@ -8,17 +8,17 @@ package rtc
 
 // #cgo CXXFLAGS: -DWEBRTC_POSIX
 // #cgo CXXFLAGS: -DGANG_AV_LOG=0
-// #cgo CXXFLAGS: -DSPDLOG_NO_DATETIME
+// #cgo CXXFLAGS: -DSPDLOG_NO_DATETIME -D_GLIBCXX_USE_CXX11_ABI=0
 // #cgo CXXFLAGS: -DLOG_LEVEL=0
 //
-// #cgo CXXFLAGS: -std=gnu++11 -pthread -Wall -O3 -c -fmessage-length=0 -fno-rtti
+// #cgo CXXFLAGS: -std=c++11 -pthread -Wall -O3 -c -fmessage-length=0 -fno-rtti
 // #cgo CXXFLAGS: -I/home/savage/git/webrtcbuilds
 // #cgo CXXFLAGS: -I/usr/include/jsoncpp
 // #cgo CXXFLAGS: -I/home/savage/git/ffmpeg-wrap
 // #cgo CXXFLAGS: -I/home/savage/git/spdlog/include
 //
 // #cgo pkg-config: libavcodec libavformat libavfilter libcrypto openssl
-// #cgo LDFLAGS: -std=gnu++11 -L/home/savage/git/ffmpeg-wrap/Release -lffmpeg-wrap
+// #cgo LDFLAGS: -std=c++11 -L/home/savage/git/ffmpeg-wrap/Release -lffmpeg-wrap
 // #cgo LDFLAGS: -L/home/savage/soft/webrtc/webrtc-linux64/lib/Debug -lwebrtc_full
 // #cgo LDFLAGS: -pthread -lrt -ldl
 //
