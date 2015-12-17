@@ -1,6 +1,6 @@
 project('ic-client-one-wrap', 'cpp')
-add_global_arguments('-std=c++11', language : 'cpp')
 add_global_arguments('-fno-rtti', language : 'cpp')
+add_global_arguments('-pthread', language : 'cpp')
 
 inc = include_directories(
   '/home/savage/git/ffmpeg-wrap',
@@ -23,7 +23,7 @@ avformat = dependency('libavformat')
 
 wraplib = static_library('ic-client-one-wrap',
                         sources: src,
-                        include_directories : inc,
+                        include_directories: inc,
                         install: true,
                         cpp_args: ['-DLOG_LEVEL=0',
                                    '-DGANG_AV_LOG=0',
@@ -32,4 +32,5 @@ wraplib = static_library('ic-client-one-wrap',
                                    '-DSPDLOG_TRACE_OFF',
                                    '-DWEBRTC_POSIX',
                                    '-DSPDLOG_NO_DATETIME',
-                                   '-DNO_CGO'])
+                                   '-DNO_CGO',
+                                   '-D_GLIBCXX_USE_CXX11_ABI=0'])
