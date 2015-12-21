@@ -5,7 +5,6 @@
 
 #include "composed_pc_factory.h"
 #include "fakeconstraints.h"
-#include "ipcam_info.h"
 
 namespace one {
 class Peer;
@@ -28,24 +27,21 @@ public:
   virtual void OnStatusChange(const string&    id,
                               gang::GangStatus status);
 
-  Peer*        CreatePeer(const string url,
-                          void*        goPcPtr);
 
-  void         DeletePeer(Peer* pc);
-
-  void         AddIceServer(string uri,
-                            string name,
-                            string psd);
+  Peer* CreatePeer(const string& id,
+                   void*         goPcPtr);
+  void  DeletePeer(Peer* pc);
+  void  AddIceServer(string uri,
+                     string name,
+                     string psd);
+  void  SetDecFactory(GangDecoderFactoryInterface* dec_factory);
 
   // Must after AddIceServer
   // Will be used in go
-  int AddPeerConnectionFactory(
-    ipcam_info*   info,
-    const string& id,
-    const string& url,
-    const string& rec_name,
-    bool          rec_enabled,
-    bool          audio_off);
+  bool AddPeerConnectionFactory(
+    ipcam_av_info* av_info,
+    const string&  id,
+    ipcam_info*    info);
 
   Factoty GetPeerConnectionFactory(const string& url);
 
@@ -59,7 +55,8 @@ public:
 private:
   void InitConstraintsOnce(bool dtls);
 
-  map<string, Factoty> factories_;
-  void*                goConductorPtr_;
+  map<string, Factoty>                    factories_;
+  shared_ptr<GangDecoderFactoryInterface> dec_factory_;
+  void*                                   goConductorPtr_;
 };
 } // namespace one

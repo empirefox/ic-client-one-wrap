@@ -25,6 +25,9 @@ _testmain.go
 *.test
 *.prof
 
+*-rec.mp4
+*.gch
+peerconn_cgo.h
 build
 Release
 Debug

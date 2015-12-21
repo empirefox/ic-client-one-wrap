@@ -16,40 +16,31 @@ const char kVideoLabel[]  = "video_label";
 const char kStreamLabel[] = "stream_label";
 
 ComposedPCFactory::ComposedPCFactory(
-  Shared*       shared,
-  const string& id,
-  const string& url,
-  const string& rec_name,
-  bool          rec_enabled,
-  bool          audio_off) :
+  Shared*                                 shared,
+  const string&                           id,
+  ipcam_info*                             info,
+  shared_ptr<GangDecoderFactoryInterface> dec_factory) :
   id_(id),
   worker_thread_(new Thread),
   shared_(shared),
-  decoder_(NULL),
+  gang_(NULL),
   peers_(0) {
   if (!worker_thread_->Start()) {
     console->error() << "worker_thread_ failed to start";
   }
 
   //	rtc::PlatformThreadRef current_thread = rtc::CurrentThreadRef();
-  decoder_ = std::make_shared<GangDecoder>(
-    id,
-    url,
-    rec_name,
-    rec_enabled,
-    audio_off,
-    worker_thread_,
-    shared);
+  gang_ = std::make_shared<Gang>(id, info, worker_thread_, shared, dec_factory);
   SPDLOG_TRACE(console, "{}", __func__)
 }
 
 ComposedPCFactory::~ComposedPCFactory() {
   SPDLOG_TRACE(console, "{}", __func__)
-  if (decoder_.get()) {
-    decoder_->Shutdown();
+  if (gang_.get()) {
+    gang_->Shutdown();
   }
-  decoder_ = NULL;
-  SPDLOG_TRACE(console, "{} {}", __func__, "decoder_=NULL ok")
+  gang_ = NULL;
+  SPDLOG_TRACE(console, "{} {}", __func__, "gang_=NULL ok")
   releaseFactory();
 
   // TODO need stop?
@@ -100,22 +91,22 @@ void ComposedPCFactory::releaseFactory() {
   SPDLOG_TRACE(console, "{} {}", __func__, "factory_ ok")
 }
 
-bool ComposedPCFactory::Init(ipcam_info* info) {
+bool ComposedPCFactory::Init(ipcam_av_info* info) {
   SPDLOG_TRACE(console, "{}", __func__)
-  if (!decoder_->Init()) {
+  if (!gang_->Init()) {
     return false;
   }
 
-  decoder_->GetClientVideoInfo(&info->width, &info->height, &info->no_video, &info->no_audio);
-  decoder_->StartRec();
+  gang_->GetAvInfo(info);
+  gang_->StartRec();
   return true;
 }
 
 bool ComposedPCFactory::CreateFactory() {
   // 1. Create GangAudioDevice
   scoped_refptr<GangAudioDevice> audio(NULL);
-  if (decoder_->IsAudioAvailable()) {
-    audio = GangAudioDevice::Create(decoder_);
+  if (gang_->IsAudioAvailable()) {
+    audio = GangAudioDevice::Create(gang_);
     if (!audio.get()) {
       return false;
     }
@@ -131,9 +122,8 @@ bool ComposedPCFactory::CreateFactory() {
 
   // 3. Create VideoSource
   VideoCapturer * video = NULL;
-  if (decoder_->IsVideoAvailable()) {
-    video =
-      shared_->SignalingThread->Invoke<VideoCapturer*>(Bind(&gang::CreateVideoCapturer, decoder_, worker_thread_));
+  if (gang_->IsVideoAvailable()) {
+    video = shared_->SignalingThread->Invoke<VideoCapturer*>(Bind(&gang::CreateVideoCapturer, gang_, worker_thread_));
     if (!video) {
       return false;
     }
@@ -148,12 +138,12 @@ bool ComposedPCFactory::CreateFactory() {
 
   // 4. Create stream
   stream_ = factory_->CreateLocalMediaStream(kStreamLabel);
-  if (decoder_->IsAudioAvailable()) {
+  if (gang_->IsAudioAvailable()) {
     if (!stream_->AddTrack(factory_->CreateAudioTrack(kAudioLabel, factory_->CreateAudioSource(NULL)))) {
       console->error("{} Failed to add audio track ({})", __func__, id_);
     }
   }
-  if (decoder_->IsVideoAvailable()) {
+  if (gang_->IsVideoAvailable()) {
     if (!stream_->AddTrack(factory_->CreateVideoTrack(kVideoLabel, factory_->CreateVideoSource(video, NULL)))) {
       // after one delete, exist count 3 -> 2, created count 2 -> 1(delete)
       console->error("{} Failed to add video track ({})", __func__, id_);
@@ -165,8 +155,8 @@ bool ComposedPCFactory::CreateFactory() {
 }
 
 void ComposedPCFactory::SetRecordEnabled(bool enabled) {
-  if (decoder_) {
-    decoder_->SetRecordEnabled(enabled);
+  if (gang_) {
+    gang_->SetRecordEnabled(enabled);
   }
 }
 } // namespace one

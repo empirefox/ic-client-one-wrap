@@ -1,5 +1,7 @@
 #pragma once
 
+#include "param_types.h"
+
 void* Init(void* goConductorPtr);
 void  Release(void* shared);
 
@@ -8,17 +10,14 @@ void  AddICE(void* sharedPtr,
              char* name,
              char* psd);
 
-int RegistryCam(ipcam_info* info,
-                void*       sharedPtr,
-                char*       id,
-                char*       url,
-                char*       rec_name,
-                int         rec_enabled,
-                int         audio_off);
+bool RegistryCam(ipcam_av_info* av_info,
+                 void*          sharedPtr,
+                 char*          id,
+                 ipcam_info*    info);
 
 void SetRecordEnabled(void* sharedPtr,
                       char* id,
-                      int   rec_enabled);
+                      bool  rec_on);
 
 void* CreatePeer(char* id,
                  void* sharedPtr,

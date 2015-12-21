@@ -1,0 +1,19 @@
+pc=/home/savage/go/src/github.com/empirefox/ic-client-one-wrap
+
+Name: rtcwrap
+Description: rtcwrap
+Version: 1
+
+Requires: libavcodec, libavformat, libavfilter, libcrypto, openssl
+
+CXXFLAGS: \
+	-I${pc}/gang \
+	-I${pc}/peer \
+	-D_GLIBCXX_USE_CXX11_ABI=0 \
+	-std=c++11 -pthread -Wall -O3 -c -fmessage-length=0 -fno-rtti
+
+Libs: \
+	-std=c++11 -lstdc++ \
+	-L${pc}/Release -lrtcwrap \
+	-L/home/savage/soft/webrtc/webrtc-linux64/lib/Debug -lwebrtc_full \
+	-pthread -lrt -ldl

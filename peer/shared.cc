@@ -40,7 +40,7 @@ void Shared::OnStatusChange(const string& id, gang::GangStatus status) {
   }
 }
 
-Peer* Shared::CreatePeer(const string id, void* goPcPtr) {
+Peer* Shared::CreatePeer(const string& id, void* goPcPtr) {
   rtc::CritScope cs(&peer_lock_);
 
   return new Peer(id, this, goPcPtr);
@@ -76,37 +76,37 @@ void Shared::AddIceServer(string uri, string name, string psd) {
   IceServers.push_back(server);
 }
 
+void Shared::SetDecFactory(GangDecoderFactoryInterface* dec_factory) {
+  dec_factory_.reset(dec_factory);
+}
+
 // For ComposedPeerConnectionFactory
 // Will be used in go
-int Shared::AddPeerConnectionFactory(
-  ipcam_info*   info,
-  const string& id,
-  const string& url,
-  const string& rec_name,
-  bool          rec_enabled,
-  bool          audio_off) {
+bool Shared::AddPeerConnectionFactory(ipcam_av_info* av_info, const string& id, ipcam_info* info) {
   SPDLOG_TRACE(console, "{}", __func__)
   rtc::CritScope cs(&factories_lock_);
-  auto           factory = make_shared<ComposedPCFactory>(this, id, url, rec_name, rec_enabled, audio_off);
+
+  auto factory = make_shared<ComposedPCFactory>(this, id, info, dec_factory_);
   if (!factory.get()) {
-    console->error("Failed to create ComposedPeerConnectionFactory with {}: {}", id, url);
-    return 0;
+    console->error("Failed to create ComposedPeerConnectionFactory with {}", id);
+    return false;
   }
 
-  if (!factory->Init(info)) {
-    console->error("Failed to init ComposedPeerConnectionFactory {}: {}", id, url);
-    return 0;
+  if (!factory->Init(av_info)) {
+    console->error("Failed to init ComposedPeerConnectionFactory {}", id);
+    return false;
   }
 
   SPDLOG_TRACE(console, "{} factory use_count:{}", __func__, factory.use_count())
   factories_.insert(make_pair(id, factory));
   SPDLOG_TRACE(console, "{} factory use_count:{}", __func__, factory.use_count())
-  return 1;
+  return true;
 }
 
 Factoty Shared::GetPeerConnectionFactory(const string& id) {
   rtc::CritScope cs(&factories_lock_);
-  auto           iter = factories_.find(id);
+
+  auto iter = factories_.find(id);
 
   if (iter != factories_.end()) {
     SPDLOG_TRACE(console, "{} found with {}", __func__, id);

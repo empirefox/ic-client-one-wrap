@@ -1,0 +1,8 @@
+{
+  "execPath": "/usr/bin/g++",
+  "gccDefaultCFlags": "-Wall",
+  "gccDefaultCppFlags": "-Wall",
+  "gccErrorLimit": 15,
+  "gccIncludePaths": ".,..,../gang,/home/savage/git/macro-logger,/home/savage/git/spdlog/include,/home/savage/git/webrtcbuilds,/home/savage/git/Catch/single_include",
+  "gccSuppressWarnings": true
+}

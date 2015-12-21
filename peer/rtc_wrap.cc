@@ -1,20 +1,11 @@
-/*
- * peer_wrap.cc
- *
- *  Created on: May 1, 2015
- *      Author: savage
- */
-#include "peer.h"
+#include "rtc_wrap.h"
 
 #include "webrtc/base/ssladapter.h"
 #include "webrtc/base/bind.h"
 
+#include "peer.h"
 #include "gang_init_deps.h"
 #include "one_spdlog_console.h"
-
-extern "C" {
-#include "peer_wrap.h"
-}
 
 #define DTLS_ON  true
 #define DTLS_OFF false
@@ -50,37 +41,32 @@ void AddICE(void* sharedPtr, char* uri, char* name, char* psd) {
   reinterpret_cast<Shared*>(sharedPtr)->AddIceServer(string(uri), string(name), string(psd));
 }
 
-int RegistryCam(
-  ipcam_info* info,
-  void*       sharedPtr,
-  char*       id,
-  char*       url,
-  char*       rec_name,
-  int         rec_enabled,
-  int         audio_off) {
-  Shared* shared    = reinterpret_cast<Shared*>(sharedPtr);
-  string  cid       = string(id);
-  string  curl      = string(url);
-  string  crec_name = string(rec_name);
+bool RegistryCam(
+  ipcam_av_info* av_info,
+  void*          sharedPtr,
+  char*          id,
+  ipcam_info*    info) {
+  Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
+  string  cid    = string(id);
 
-  return shared->AddPeerConnectionFactory(info, cid, curl, crec_name, rec_enabled, audio_off);
+  return shared->AddPeerConnectionFactory(av_info, cid, info);
 }
 
-void SetRecordEnabled(void* sharedPtr, char* id, int rec_enabled) {
+void SetRecordEnabled(void* sharedPtr, char* id, bool rec_on) {
   Shared* shared  = reinterpret_cast<Shared*>(sharedPtr);
   string  cid     = string(id);
   auto    factory = shared->GetPeerConnectionFactory(cid);
 
-  if (!factory) {
-    return;
+  if (factory) {
+    factory->SetRecordEnabled(rec_on);
   }
-  factory->SetRecordEnabled(rec_enabled);
 }
 
 void* CreatePeer(char* id, void* sharedPtr, void* goPcPtr) {
   Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
+  string  cid    = string(id);
 
-  return reinterpret_cast<void*>(shared->CreatePeer(string(id), goPcPtr));
+  return reinterpret_cast<void*>(shared->CreatePeer(cid, goPcPtr));
 }
 
 void DeletePeer(void* pc) {
