@@ -48,28 +48,33 @@ public:
           break;
 
         case REC_ON:
+          SPDLOG_TRACE(console, "{} REC_ON", __func__)
           gang_->SetRecOn(static_cast<RecOnMsgData*>(pmsg->pdata)->data());
           break;
 
         case VIDEO_START: {
+          SPDLOG_TRACE(console, "{} VIDEO_START", __func__)
           rtc::scoped_ptr<ObserverMsgData> data(static_cast<ObserverMsgData*>(pmsg->pdata));
           gang_->StartVideoCapture_g(data->data()->observer, data->data()->buff);
           break;
         }
 
         case VIDEO_STOP: {
+          SPDLOG_TRACE(console, "{} VIDEO_STOP", __func__)
           rtc::scoped_ptr<ObserverMsgData> data(static_cast<ObserverMsgData*>(pmsg->pdata));
           gang_->StopVideoCapture_g(data->data()->observer);
           break;
         }
 
         case AUDIO_OBSERVER: {
+          SPDLOG_TRACE(console, "{} AUDIO_OBSERVER", __func__)
           rtc::scoped_ptr<ObserverMsgData> data(static_cast<ObserverMsgData*>(pmsg->pdata));
           gang_->SetAudioObserver_g(data->data()->observer, data->data()->buff);
           break;
         }
 
         case START_REC:
+          SPDLOG_TRACE(console, "{} START_REC", __func__)
           gang_->Start();
           break;
 
@@ -239,10 +244,7 @@ bool Gang::NextFrameLoop() {
 void Gang::StartVideoCapture(GangFrameObserver* observer, uint8_t* buff) {
   DCHECK(observer);
   DCHECK(buff);
-  gang_thread_->Post(
-    gang_thread_,
-    VIDEO_START,
-    new ObserverMsgData(new Observer(observer, buff)));
+  gang_thread_->Post(gang_thread_, VIDEO_START, new ObserverMsgData(new Observer(observer, buff)));
 }
 
 void Gang::StartVideoCapture_g(GangFrameObserver* observer, uint8_t* buff) {

@@ -17,6 +17,7 @@ ganglib = static_library(
   sources: gang_src,
   include_directories: inc,
   dependencies: deps,
+  c_args: main_c_args,
   cpp_args: main_cpp_args
 )
 

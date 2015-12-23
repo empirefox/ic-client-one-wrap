@@ -28,18 +28,21 @@ webrtc_link_args = ['-pthread', '-lrt', '-ldl']
 deps = [avcodec, avformat, avfilter, webrtc, jsoncpp, crypto, openssl]
 
 # debug info use  -DDCHECK_ALWAYS_ON -DWEBRTC_TRACE -DENABLE_DEBUG=1
-# sdplog: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DPEER_INFO_ON -DSPDLOG_NO_DATETIME
+# sdplog: -DSPDLOG_DEBUG_ON -DSPDLOG_TRACE_ON -DPEER_INFO_ON -DSPDLOG_NO_DATETIME -DSPDLOG_TRACE_OFF
 # Macro-Logger: -DLOG_LEVEL=1 0:NO_LOGS,1:ERROR,2:INFO,3:DEBUG
 # ffmpeg log: -DGANG_AV_LOG quiet:-8,panic:0,fatal:8,error:16
 #            warning:24,info:32,verbose:40,debug:48,trace:56
 # -O3 -ggdb
 
-main_cpp_args = [
-  '-DLOG_LEVEL=1',
+main_c_args = [
   '-DGANG_AV_LOG=0',
+  '-DLOG_LEVEL=2'
+]
+
+main_cpp_args = [
   '-DENABLE_THREAD_CHECKER=1',
   '-DENABLE_DEBUG=0',
-  '-DSPDLOG_TRACE_OFF',
+  '-DSPDLOG_TRACE_ON',
   '-DWEBRTC_POSIX',
   '-DSPDLOG_NO_DATETIME',
   '-D_GLIBCXX_USE_CXX11_ABI=0'

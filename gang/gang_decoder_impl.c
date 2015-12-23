@@ -215,10 +215,10 @@ static int copy_send_frame(gang_decoder* dec, FilterStreamContext* fsc) {
            dec->o_frame->extended_data[0],
            dec->audio_buff_size);
   } else {
-    LOG_INFO("is_video:%d, no video_buff:%d, no audio_buff:%d",
-             fsc->is_video,
-             !dec->video_buff,
-             !dec->audio_buff);
+    LOG_DEBUG("is_video:%d, no video_buff:%d, no audio_buff:%d",
+              fsc->is_video,
+              !dec->video_buff,
+              !dec->audio_buff);
   }
   return ret;
 }

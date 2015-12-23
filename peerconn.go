@@ -119,12 +119,12 @@ func (conductor *conductor) Registry(id, url, recName string, isRecOn, isAudioOf
 		rec_on:    C._Bool(isRecOn),
 		audio_off: C._Bool(isAudioOff),
 	}
-	avInfo := C.ipcam_av_info{width: 0, height: 0, no_video: true, no_audio: true}
+	avInfo := C.ipcam_av_info{width: 0, height: 0, video: true, audio: true}
 	ok := C.registry_cam(&avInfo, conductor.shared, cid, &info)
 
 	return IpcamAvInfo{
 		Width: int(avInfo.width), Height: int(avInfo.height),
-		Video: bool(avInfo.no_video), Audio: bool(avInfo.no_audio),
+		Video: bool(avInfo.video), Audio: bool(avInfo.audio),
 	}, bool(ok)
 }
 

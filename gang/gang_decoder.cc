@@ -25,7 +25,7 @@ bool GangDecoder::IsVideoAvailable()          {return !decoder_->no_video;}
 
 bool GangDecoder::IsAudioAvailable()          {return !decoder_->no_audio;}
 
-bool GangDecoder::IsRecEnabled()              {return !decoder_->rec_enabled;}
+bool GangDecoder::IsRecEnabled()              {return decoder_->rec_enabled;}
 
 void GangDecoder::SetRecEnabled(bool enabled) {decoder_->rec_enabled = enabled;}
 
@@ -34,10 +34,10 @@ void GangDecoder::SetVideoBuff(uint8_t* buff) {decoder_->video_buff = buff;}
 void GangDecoder::SetAudioBuff(uint8_t* buff) {decoder_->audio_buff = buff;}
 
 void GangDecoder::GetAvInfo(ipcam_av_info* info) {
-  info->width    = decoder_->width;
-  info->height   = decoder_->height;
-  info->no_video = decoder_->no_video;
-  info->no_audio = decoder_->no_audio;
+  info->width  = decoder_->width;
+  info->height = decoder_->height;
+  info->video  = !decoder_->no_video;
+  info->audio  = !decoder_->no_audio;
 }
 
 void GangDecoder::GetVideoInfo(int*    width,

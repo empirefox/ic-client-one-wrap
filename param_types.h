@@ -16,8 +16,8 @@ typedef struct ipcam_info {
 typedef struct ipcam_av_info {
   int  width;
   int  height;
-  bool no_video;
-  bool no_audio;
+  bool video;
+  bool audio;
 } ipcam_av_info;
 
 #ifdef __cplusplus
