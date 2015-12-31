@@ -16,6 +16,8 @@ bool registry_cam(ipcam_av_info* av_info, void* sharedPtr, char* id, ipcam_info*
   return RegistryCam(av_info, sharedPtr, id, info);
 }
 
+void  unregistry_cam(void* sharedPtr, char* id)               {UnregistryCam(sharedPtr, id);}
+
 void  set_record_on(void* sharedPtr, char* id, bool rec_on)   {SetRecordEnabled(sharedPtr, id, rec_on);}
 
 void* create_peer(char* id, void* sharedPtr, void* goPcPtr)   {return CreatePeer(id, sharedPtr, goPcPtr);}

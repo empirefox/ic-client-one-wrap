@@ -298,7 +298,7 @@ void Gang::SetRecordEnabled(bool enabled) {
 void Gang::SetRecOn(bool enabled) {
   DCHECK(gang_thread_->IsCurrent());
 
-  if ((!dec_->IsRecEnabled()) == (!enabled)) {
+  if (dec_->IsRecEnabled() == enabled) {
     return;
   }
   Stop(true);

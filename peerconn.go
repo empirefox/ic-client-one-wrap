@@ -23,6 +23,7 @@ type StatusObserver interface {
 }
 
 type IpcamAvInfo struct {
+	Ok     bool
 	Width  int
 	Height int
 	Video  bool
@@ -73,7 +74,8 @@ func (pc *peerConn) AddCandidate(sdp, mid string, line int) {
 ////////////////////////////////////
 type Conductor interface {
 	Release()
-	Registry(id, url, recName string, isRecOn, isAudioOff bool) (IpcamAvInfo, bool)
+	Registry(id, url, recName string, isRecOn, isAudioOff bool) IpcamAvInfo
+	UnRegistry(id string)
 	SetRecordEnabled(url string, isRecOn bool)
 	CreatePeer(id string, send func([]byte)) PeerConn
 	DeletePeer(pc PeerConn)
@@ -109,7 +111,7 @@ func (conductor *conductor) Release() {
 	conductor.shared = nil
 }
 
-func (conductor *conductor) Registry(id, url, recName string, isRecOn, isAudioOff bool) (IpcamAvInfo, bool) {
+func (conductor *conductor) Registry(id, url, recName string, isRecOn, isAudioOff bool) IpcamAvInfo {
 	cid := C.CString(id)
 	defer C.free(unsafe.Pointer(cid))
 
@@ -119,13 +121,24 @@ func (conductor *conductor) Registry(id, url, recName string, isRecOn, isAudioOf
 		rec_on:    C._Bool(isRecOn),
 		audio_off: C._Bool(isAudioOff),
 	}
+	defer func() {
+		C.free(unsafe.Pointer(info.url))
+		C.free(unsafe.Pointer(info.rec_name))
+	}()
 	avInfo := C.ipcam_av_info{width: 0, height: 0, video: true, audio: true}
 	ok := C.registry_cam(&avInfo, conductor.shared, cid, &info)
 
 	return IpcamAvInfo{
+		Ok:    bool(ok),
 		Width: int(avInfo.width), Height: int(avInfo.height),
 		Video: bool(avInfo.video), Audio: bool(avInfo.audio),
-	}, bool(ok)
+	}
+}
+
+func (conductor *conductor) UnRegistry(id string) {
+	cid := C.CString(id)
+	defer C.free(unsafe.Pointer(cid))
+	C.unregistry_cam(conductor.shared, cid)
 }
 
 func (conductor *conductor) SetRecordEnabled(id string, isRecOn bool) {

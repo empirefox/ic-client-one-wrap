@@ -11,9 +11,12 @@ void  add_ICE(void* sharedPtr,
               char* psd);
 
 bool registry_cam(ipcam_av_info* av_info,
-                 void*          sharedPtr,
-                 char*          id,
-                 ipcam_info*    info);
+                  void*          sharedPtr,
+                  char*          id,
+                  ipcam_info*    info);
+
+void unregistry_cam(void* sharedPtr,
+                    char* id);
 
 void set_record_on(void* sharedPtr,
                    char* id,

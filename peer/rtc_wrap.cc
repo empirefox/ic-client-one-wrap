@@ -49,7 +49,12 @@ bool RegistryCam(
   Shared* shared = reinterpret_cast<Shared*>(sharedPtr);
   string  cid    = string(id);
 
+  // free id then cid == ""
   return shared->AddPeerConnectionFactory(av_info, cid, info);
+}
+
+void UnregistryCam(void* sharedPtr, char* id) {
+  reinterpret_cast<Shared*>(sharedPtr)->DelPeerConnectionFactory(string(id));
 }
 
 void SetRecordEnabled(void* sharedPtr, char* id, bool rec_on) {

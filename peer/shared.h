@@ -43,7 +43,8 @@ public:
     const string&  id,
     ipcam_info*    info);
 
-  Factoty GetPeerConnectionFactory(const string& url);
+  Factoty GetPeerConnectionFactory(const string& id);
+  void    DelPeerConnectionFactory(const string& id);
 
   PeerConnectionInterface::IceServers IceServers;
   webrtc::FakeConstraints             Constraints;

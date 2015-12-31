@@ -66,10 +66,13 @@ int open_input_file(
   AVStream**        video_stream,
   AVStream**        audio_stream,
   int               audio_off) {
-  int error, video_stream_idx, audio_stream_idx;
+  int           error, video_stream_idx, audio_stream_idx;
+  AVDictionary* opts = NULL;
+
+  av_dict_set(&opts, "stimeout", "6000000", 0);
 
   /** Open the input file to read from it. */
-  if ((error = avformat_open_input(i_fctx, filename, NULL, NULL)) < 0) {
+  if ((error = avformat_open_input(i_fctx, filename, NULL,  &opts)) < 0) {
     LOG_ERROR("Could not open input file '%s' (error '%s')", filename, get_error_text(error));
     *i_fctx = NULL;
     return error;

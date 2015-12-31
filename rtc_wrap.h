@@ -15,6 +15,9 @@ bool RegistryCam(ipcam_av_info* av_info,
                  char*          id,
                  ipcam_info*    info);
 
+void UnregistryCam(void* sharedPtr,
+                   char* id);
+
 void SetRecordEnabled(void* sharedPtr,
                       char* id,
                       bool  rec_on);

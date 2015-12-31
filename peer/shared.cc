@@ -84,8 +84,6 @@ void Shared::SetDecFactory(GangDecoderFactoryInterface* dec_factory) {
 // Will be used in go
 bool Shared::AddPeerConnectionFactory(ipcam_av_info* av_info, const string& id, ipcam_info* info) {
   SPDLOG_TRACE(console, "{}", __func__)
-  rtc::CritScope cs(&factories_lock_);
-
   auto factory = make_shared<ComposedPCFactory>(this, id, info, dec_factory_);
   if (!factory.get()) {
     console->error("Failed to create ComposedPeerConnectionFactory with {}", id);
@@ -97,6 +95,7 @@ bool Shared::AddPeerConnectionFactory(ipcam_av_info* av_info, const string& id, 
     return false;
   }
 
+  rtc::CritScope cs(&factories_lock_);
   SPDLOG_TRACE(console, "{} factory use_count:{}", __func__, factory.use_count())
   factories_.insert(make_pair(id, factory));
   SPDLOG_TRACE(console, "{} factory use_count:{}", __func__, factory.use_count())
@@ -114,5 +113,11 @@ Factoty Shared::GetPeerConnectionFactory(const string& id) {
   }
   SPDLOG_TRACE(console, "{} not found with {}", __func__, id);
   return NULL;
+}
+
+void Shared::DelPeerConnectionFactory(const string& id) {
+  rtc::CritScope cs(&factories_lock_);
+
+  factories_.erase(id);
 }
 } // namespace one
